@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createMemberAction, deleteMemberAction } from "./actions";
+import DeleteMemberForm from "./DeleteMemberForm";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -125,12 +126,11 @@ export default async function MembersPage() {
                     <Link className="secondaryButton" href={`/members/${member.id}`}>
                       편집
                     </Link>
-                    <form action={deleteMemberAction}>
-                      <input name="id" type="hidden" value={member.id} />
-                      <button className="dangerButton" type="submit">
-                        삭제
-                      </button>
-                    </form>
+                    <DeleteMemberForm
+                      action={deleteMemberAction}
+                      memberId={member.id}
+                      memberName={member.name}
+                    />
                   </div>
                 </article>
               ))}

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { deleteMemberAction, updateMemberAction } from "../actions";
+import DeleteMemberForm from "../DeleteMemberForm";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -85,16 +86,18 @@ export default async function MemberDetailPage({ params }) {
         </div>
       </form>
 
-      <form action={deleteMemberAction} className="deletePanel">
-        <input name="id" type="hidden" value={member.id} />
+      <section className="deletePanel">
         <div>
           <h2>회원 삭제</h2>
           <p>삭제하면 PostgreSQL 데이터베이스에서 이 회원 정보가 제거됩니다.</p>
         </div>
-        <button className="dangerButton" type="submit">
-          이 회원 삭제
-        </button>
-      </form>
+        <DeleteMemberForm
+          action={deleteMemberAction}
+          buttonText="이 회원 삭제"
+          memberId={member.id}
+          memberName={member.name}
+        />
+      </section>
     </main>
   );
 }
