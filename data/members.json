@@ -1,0 +1,32 @@
+[
+  {
+    "id": "eeeb8a26-0c13-444d-b996-4acacb01189a",
+    "name": "노경민",
+    "phone": "01038110535",
+    "memo": "",
+    "totalLessons": 30,
+    "remainingLessons": 30,
+    "createdAt": "2026-05-20T09:10:05.762Z",
+    "updatedAt": "2026-05-20T09:10:17.318Z"
+  },
+  {
+    "id": "73be50e9-b716-4458-92f5-a7b2efdc6d03",
+    "name": "이소정",
+    "phone": "01051490535",
+    "memo": "",
+    "totalLessons": 30,
+    "remainingLessons": 20,
+    "createdAt": "2026-05-20T09:10:38.906Z",
+    "updatedAt": "2026-05-20T09:10:44.646Z"
+  },
+  {
+    "id": "b4d8ddc1-be77-414f-8dfb-9c187a196398",
+    "name": "노정석",
+    "phone": "01051490535",
+    "memo": "",
+    "totalLessons": 15,
+    "remainingLessons": 15,
+    "createdAt": "2026-05-20T09:20:13.095Z",
+    "updatedAt": "2026-05-20T09:20:17.989Z"
+  }
+]
