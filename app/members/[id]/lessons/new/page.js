@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getExerciseCatalogForForm } from "@/lib/exerciseCatalog";
 import { prisma } from "@/lib/prisma";
 import LessonForm from "../LessonForm";
 
@@ -24,6 +25,9 @@ export default async function NewLessonPage({ params }) {
   }
 
   const canCreateLesson = member.remainingLessons > 0;
+  const exerciseCategories = canCreateLesson
+    ? await getExerciseCatalogForForm()
+    : [];
 
   return (
     <main className="shell narrowShell">
@@ -47,7 +51,10 @@ export default async function NewLessonPage({ params }) {
       </section>
 
       {canCreateLesson ? (
-        <LessonForm memberId={member.id} />
+        <LessonForm
+          exerciseCategories={exerciseCategories}
+          memberId={member.id}
+        />
       ) : (
         <section className="panel lessonBlocked">
           <h2>잔여 레슨이 없습니다.</h2>

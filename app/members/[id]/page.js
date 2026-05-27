@@ -13,6 +13,27 @@ function formatDate(date) {
   }).format(date);
 }
 
+function getExerciseName(exercise) {
+  return exercise.exerciseCatalog?.name || exercise.customName || "운동명 없음";
+}
+
+function getLessonSummary(lesson) {
+  if (lesson.notes) {
+    return lesson.notes;
+  }
+
+  if (lesson.exercises.length === 0) {
+    return "운동 기록 없음";
+  }
+
+  const exerciseNames = lesson.exercises.slice(0, 3).map(getExerciseName);
+  const extraCount = lesson.exercises.length - exerciseNames.length;
+
+  return extraCount > 0
+    ? `${exerciseNames.join(", ")} 외 ${extraCount}개`
+    : exerciseNames.join(", ");
+}
+
 function getSuccessMessage(member, searchParams) {
   if (searchParams?.memberCreated === "1") {
     return `${member.name} 회원님이 등록되었습니다.`;
@@ -38,6 +59,16 @@ export default async function MemberDetailPage({ params, searchParams }) {
       lessons: {
         orderBy: {
           createdAt: "desc"
+        },
+        include: {
+          exercises: {
+            orderBy: {
+              sortOrder: "asc"
+            },
+            include: {
+              exerciseCatalog: true
+            }
+          }
         }
       }
     }
@@ -155,7 +186,7 @@ export default async function MemberDetailPage({ params, searchParams }) {
                 key={lesson.id}
               >
                 <strong>Lesson #{lesson.lessonNumber}</strong>
-                <span>{lesson.notes || lesson.exercises}</span>
+                <span>{getLessonSummary(lesson)}</span>
                 <time dateTime={lesson.createdAt.toISOString()}>
                   {formatDate(lesson.createdAt)}
                 </time>

@@ -11,6 +11,18 @@ function formatDate(date) {
   }).format(date);
 }
 
+function getExerciseName(exercise) {
+  return exercise.exerciseCatalog?.name || exercise.customName || "운동명 없음";
+}
+
+function getExerciseCategoryName(exercise) {
+  return (
+    exercise.exerciseCatalog?.category?.name ||
+    exercise.customCategory?.name ||
+    "부위 없음"
+  );
+}
+
 export default async function LessonDetailPage({ params }) {
   const { id, lessonId } = await params;
   const lesson = await prisma.lessonLog.findUnique({
@@ -22,6 +34,19 @@ export default async function LessonDetailPage({ params }) {
         select: {
           id: true,
           name: true
+        }
+      },
+      exercises: {
+        orderBy: {
+          sortOrder: "asc"
+        },
+        include: {
+          customCategory: true,
+          exerciseCatalog: {
+            include: {
+              category: true
+            }
+          }
         }
       }
     }
@@ -48,7 +73,39 @@ export default async function LessonDetailPage({ params }) {
       <section className="panel lessonDetail">
         <div className="lessonDetailBlock">
           <p className="sectionLabel">운동 내용</p>
-          <p>{lesson.exercises}</p>
+          {lesson.exercises.length === 0 ? (
+            <p>운동 기록 없음</p>
+          ) : (
+            <div className="lessonExerciseDetailRows">
+              {lesson.exercises.map((exercise) => (
+                <article className="lessonExerciseDetailRow" key={exercise.id}>
+                  <div>
+                    <strong>{getExerciseName(exercise)}</strong>
+                    <span>{getExerciseCategoryName(exercise)}</span>
+                  </div>
+                  <dl>
+                    <div>
+                      <dt>세트</dt>
+                      <dd>{exercise.sets ?? "-"}</dd>
+                    </div>
+                    <div>
+                      <dt>reps</dt>
+                      <dd>{exercise.reps ?? "-"}</dd>
+                    </div>
+                    <div>
+                      <dt>중량</dt>
+                      <dd>
+                        {exercise.weightKg === null
+                          ? "-"
+                          : `${exercise.weightKg.toString()}kg`}
+                      </dd>
+                    </div>
+                  </dl>
+                  {exercise.memo ? <p>{exercise.memo}</p> : null}
+                </article>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="lessonDetailBlock">

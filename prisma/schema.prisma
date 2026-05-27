@@ -30,13 +30,64 @@ model LessonLog {
   id            String   @id @default(cuid())
   memberId      String
   lessonNumber  Int
-  exercises     String
   notes         String   @default("")
   signatureData String   @default("")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  member    Member           @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  exercises LessonExercise[]
 
   @@index([memberId])
+}
+
+model ExerciseCategory {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  exercises       ExerciseCatalog[]
+  customExercises LessonExercise[]  @relation("LessonExerciseCustomCategory")
+}
+
+model ExerciseCatalog {
+  id         String   @id @default(cuid())
+  categoryId String
+  name       String
+  sortOrder  Int      @default(0)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  category        ExerciseCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  lessonExercises LessonExercise[]
+
+  @@unique([categoryId, name])
+  @@index([categoryId])
+}
+
+model LessonExercise {
+  id                String   @id @default(cuid())
+  lessonLogId       String
+  exerciseCatalogId String?
+  customCategoryId  String?
+  customName        String   @default("")
+  sets              Int?
+  reps              Int?
+  weightKg          Decimal? @db.Decimal(6, 2)
+  memo              String   @default("")
+  sortOrder         Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  lessonLog       LessonLog         @relation(fields: [lessonLogId], references: [id], onDelete: Cascade)
+  exerciseCatalog ExerciseCatalog?  @relation(fields: [exerciseCatalogId], references: [id], onDelete: SetNull)
+  customCategory  ExerciseCategory? @relation("LessonExerciseCustomCategory", fields: [customCategoryId], references: [id], onDelete: SetNull)
+
+  @@index([lessonLogId])
+  @@index([exerciseCatalogId])
+  @@index([customCategoryId])
 }

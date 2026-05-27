@@ -28,6 +28,80 @@ function getLessonNumber(formData, fieldName, fallback = 0) {
   return Math.floor(number);
 }
 
+function getOptionalNumber(value) {
+  if (value === undefined || value === null || value === "") {
+    return null;
+  }
+
+  const number = Number(value);
+
+  if (!Number.isFinite(number) || number < 0) {
+    return null;
+  }
+
+  return number;
+}
+
+function getOptionalInteger(value) {
+  const number = getOptionalNumber(value);
+  return number === null ? null : Math.floor(number);
+}
+
+function getFormDataList(formData, fieldName) {
+  return formData.getAll(fieldName).map((value) => String(value || "").trim());
+}
+
+function getLessonExercises(formData) {
+  const exerciseCatalogIds = getFormDataList(formData, "exerciseCatalogId");
+  const customCategoryIds = getFormDataList(formData, "customCategoryId");
+  const customNames = getFormDataList(formData, "customName");
+  const sets = getFormDataList(formData, "sets");
+  const reps = getFormDataList(formData, "reps");
+  const weightKg = getFormDataList(formData, "weightKg");
+  const memos = getFormDataList(formData, "exerciseMemo");
+  const sortOrders = getFormDataList(formData, "sortOrder");
+
+  const rowCount = Math.max(
+    exerciseCatalogIds.length,
+    customNames.length,
+    reps.length
+  );
+  const exercises = [];
+
+  for (let index = 0; index < rowCount; index += 1) {
+    const exerciseCatalogId = exerciseCatalogIds[index] || null;
+    const customName = customNames[index] || "";
+    const customCategoryId = exerciseCatalogId
+      ? null
+      : customCategoryIds[index] || null;
+
+    if (!exerciseCatalogId && !customName) {
+      continue;
+    }
+
+    if (!exerciseCatalogId && !customCategoryId) {
+      throw new Error("Custom exercise category is required.");
+    }
+
+    exercises.push({
+      customCategoryId,
+      customName,
+      exerciseCatalogId,
+      memo: memos[index] || "",
+      reps: getOptionalInteger(reps[index]),
+      sets: getOptionalInteger(sets[index]),
+      sortOrder: getOptionalInteger(sortOrders[index]) ?? exercises.length,
+      weightKg: getOptionalNumber(weightKg[index])
+    });
+  }
+
+  if (exercises.length === 0) {
+    throw new Error("At least one exercise is required.");
+  }
+
+  return exercises;
+}
+
 export async function createMemberAction(formData) {
   const totalLessons = getLessonNumber(formData, "totalLessons");
   const remainingLessons = Math.min(
@@ -90,7 +164,7 @@ export async function deleteMemberAction(formData) {
 export async function createLessonAction(previousState, formData) {
   try {
     const memberId = getRequiredText(formData, "memberId");
-    const exercises = getRequiredText(formData, "exercises");
+    const lessonExercises = getLessonExercises(formData);
     const notes = getOptionalText(formData, "notes");
     const signatureData = getOptionalText(formData, "signatureData");
 
@@ -138,7 +212,9 @@ export async function createLessonAction(previousState, formData) {
         data: {
           memberId,
           lessonNumber,
-          exercises,
+          exercises: {
+            create: lessonExercises
+          },
           notes,
           signatureData
         }
@@ -158,6 +234,8 @@ export async function createLessonAction(previousState, formData) {
       error:
         error.message === "No remaining lessons."
           ? "잔여 레슨이 없습니다."
+          : error.message === "At least one exercise is required."
+            ? "운동을 하나 이상 선택해 주세요."
           : "레슨 저장 중 문제가 발생했습니다.",
       ok: false,
       redirectTo: ""
