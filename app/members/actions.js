@@ -86,3 +86,65 @@ export async function deleteMemberAction(formData) {
   revalidatePath("/members");
   redirect("/members");
 }
+
+export async function createLessonAction(formData) {
+  const memberId = getRequiredText(formData, "memberId");
+  const exercises = getRequiredText(formData, "exercises");
+  const notes = getOptionalText(formData, "notes");
+  const signatureData = getOptionalText(formData, "signatureData");
+
+  const lesson = await prisma.$transaction(async (tx) => {
+    const member = await tx.member.findUnique({
+      where: {
+        id: memberId
+      },
+      select: {
+        id: true,
+        totalLessons: true,
+        remainingLessons: true
+      }
+    });
+
+    if (!member) {
+      throw new Error("Member not found.");
+    }
+
+    if (member.remainingLessons <= 0) {
+      throw new Error("No remaining lessons.");
+    }
+
+    const lessonNumber = member.totalLessons - member.remainingLessons + 1;
+
+    const updateResult = await tx.member.updateMany({
+      where: {
+        id: memberId,
+        remainingLessons: {
+          gt: 0
+        }
+      },
+      data: {
+        remainingLessons: {
+          decrement: 1
+        }
+      }
+    });
+
+    if (updateResult.count !== 1) {
+      throw new Error("No remaining lessons.");
+    }
+
+    return tx.lessonLog.create({
+      data: {
+        memberId,
+        lessonNumber,
+        exercises,
+        notes,
+        signatureData
+      }
+    });
+  });
+
+  revalidatePath("/members");
+  revalidatePath(`/members/${memberId}`);
+  redirect(`/members/${memberId}/lessons/${lesson.id}`);
+}

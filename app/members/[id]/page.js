@@ -6,11 +6,25 @@ import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
+function formatDate(date) {
+  return new Intl.DateTimeFormat("ko-KR", {
+    dateStyle: "medium",
+    timeStyle: "short"
+  }).format(date);
+}
+
 export default async function MemberDetailPage({ params }) {
   const { id } = await params;
   const member = await prisma.member.findUnique({
     where: {
       id
+    },
+    include: {
+      lessons: {
+        orderBy: {
+          createdAt: "desc"
+        }
+      }
     }
   });
 
@@ -85,6 +99,48 @@ export default async function MemberDetailPage({ params }) {
           </button>
         </div>
       </form>
+
+      <section className="panel lessonLogSection">
+        <div className="lessonLogHeader">
+          <div>
+            <p className="sectionLabel">Lesson Log</p>
+            <h2>레슨 기록</h2>
+          </div>
+
+          {member.remainingLessons > 0 ? (
+            <Link className="primaryButton" href={`/members/${member.id}/lessons/new`}>
+              새 레슨 등록
+            </Link>
+          ) : (
+            <button className="secondaryButton" disabled type="button">
+              잔여 레슨 없음
+            </button>
+          )}
+        </div>
+
+        {member.lessons.length === 0 ? (
+          <div className="lessonEmpty">
+            <h3>아직 레슨 기록이 없습니다.</h3>
+            <p>첫 수업을 마친 뒤 레슨 내용을 기록하면 여기에 쌓입니다.</p>
+          </div>
+        ) : (
+          <div className="lessonRows">
+            {member.lessons.map((lesson) => (
+              <Link
+                className="lessonRow"
+                href={`/members/${member.id}/lessons/${lesson.id}`}
+                key={lesson.id}
+              >
+                <strong>Lesson #{lesson.lessonNumber}</strong>
+                <span>{lesson.notes || lesson.exercises}</span>
+                <time dateTime={lesson.createdAt.toISOString()}>
+                  {formatDate(lesson.createdAt)}
+                </time>
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
 
       <section className="deletePanel">
         <div>
