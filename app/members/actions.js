@@ -87,64 +87,80 @@ export async function deleteMemberAction(formData) {
   redirect("/members");
 }
 
-export async function createLessonAction(formData) {
-  const memberId = getRequiredText(formData, "memberId");
-  const exercises = getRequiredText(formData, "exercises");
-  const notes = getOptionalText(formData, "notes");
-  const signatureData = getOptionalText(formData, "signatureData");
+export async function createLessonAction(previousState, formData) {
+  try {
+    const memberId = getRequiredText(formData, "memberId");
+    const exercises = getRequiredText(formData, "exercises");
+    const notes = getOptionalText(formData, "notes");
+    const signatureData = getOptionalText(formData, "signatureData");
 
-  const lesson = await prisma.$transaction(async (tx) => {
-    const member = await tx.member.findUnique({
-      where: {
-        id: memberId
-      },
-      select: {
-        id: true,
-        totalLessons: true,
-        remainingLessons: true
-      }
-    });
-
-    if (!member) {
-      throw new Error("Member not found.");
-    }
-
-    if (member.remainingLessons <= 0) {
-      throw new Error("No remaining lessons.");
-    }
-
-    const lessonNumber = member.totalLessons - member.remainingLessons + 1;
-
-    const updateResult = await tx.member.updateMany({
-      where: {
-        id: memberId,
-        remainingLessons: {
-          gt: 0
+    const lesson = await prisma.$transaction(async (tx) => {
+      const member = await tx.member.findUnique({
+        where: {
+          id: memberId
+        },
+        select: {
+          id: true,
+          totalLessons: true,
+          remainingLessons: true
         }
-      },
-      data: {
-        remainingLessons: {
-          decrement: 1
+      });
+
+      if (!member) {
+        throw new Error("Member not found.");
+      }
+
+      if (member.remainingLessons <= 0) {
+        throw new Error("No remaining lessons.");
+      }
+
+      const lessonNumber = member.totalLessons - member.remainingLessons + 1;
+
+      const updateResult = await tx.member.updateMany({
+        where: {
+          id: memberId,
+          remainingLessons: {
+            gt: 0
+          }
+        },
+        data: {
+          remainingLessons: {
+            decrement: 1
+          }
         }
+      });
+
+      if (updateResult.count !== 1) {
+        throw new Error("No remaining lessons.");
       }
+
+      return tx.lessonLog.create({
+        data: {
+          memberId,
+          lessonNumber,
+          exercises,
+          notes,
+          signatureData
+        }
+      });
     });
 
-    if (updateResult.count !== 1) {
-      throw new Error("No remaining lessons.");
-    }
+    revalidatePath("/members");
+    revalidatePath(`/members/${memberId}`);
 
-    return tx.lessonLog.create({
-      data: {
-        memberId,
-        lessonNumber,
-        exercises,
-        notes,
-        signatureData
-      }
-    });
-  });
-
-  revalidatePath("/members");
-  revalidatePath(`/members/${memberId}`);
-  redirect(`/members/${memberId}?lessonCreated=${lesson.lessonNumber}`);
+    return {
+      error: "",
+      ok: true,
+      redirectTo: `/members/${memberId}?lessonCreated=${lesson.lessonNumber}`
+    };
+  } catch (error) {
+    return {
+      error:
+        error.message === "No remaining lessons."
+          ? "잔여 레슨이 없습니다."
+          : "레슨 저장 중 문제가 발생했습니다.",
+      ok: false,
+      redirectTo: ""
+    };
+  }
 }

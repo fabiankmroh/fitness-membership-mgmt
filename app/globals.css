@@ -300,6 +300,16 @@ textarea:focus {
   line-height: 1.45;
 }
 
+.errorNotice {
+  border: 1px solid #f1b8b0;
+  border-radius: 8px;
+  padding: 14px 16px;
+  color: var(--danger);
+  background: var(--danger-soft);
+  font-weight: 800;
+  line-height: 1.45;
+}
+
 .lessonBadge {
   display: grid;
   gap: 4px;

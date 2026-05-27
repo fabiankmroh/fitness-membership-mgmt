@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { createLessonAction } from "../../../actions";
 import { prisma } from "@/lib/prisma";
-import SignaturePad from "../SignaturePad";
+import LessonForm from "../LessonForm";
 
 export const dynamic = "force-dynamic";
 
@@ -48,36 +47,7 @@ export default async function NewLessonPage({ params }) {
       </section>
 
       {canCreateLesson ? (
-        <form action={createLessonAction} className="panel formPanel lessonForm">
-          <input name="memberId" type="hidden" value={member.id} />
-
-          <label>
-            운동 내용
-            <textarea
-              name="exercises"
-              placeholder="예: 스쿼트 3세트, 벤치프레스 3세트, 유산소 15분"
-              required
-              rows="6"
-            />
-          </label>
-
-          <label>
-            메모
-            <textarea
-              name="notes"
-              placeholder="컨디션, 다음 수업에서 확인할 점, 주의사항 등을 적습니다."
-              rows="4"
-            />
-          </label>
-
-          <SignaturePad />
-
-          <div className="formActions">
-            <button className="primaryButton" type="submit">
-              레슨 저장
-            </button>
-          </div>
-        </form>
+        <LessonForm memberId={member.id} />
       ) : (
         <section className="panel lessonBlocked">
           <h2>잔여 레슨이 없습니다.</h2>
