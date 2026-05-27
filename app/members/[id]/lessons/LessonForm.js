@@ -128,6 +128,30 @@ export default function LessonForm({ exerciseCategories, memberId }) {
     );
   }
 
+  function moveSelectedExercise(key, direction) {
+    setSelectedExercises((currentExercises) => {
+      const currentIndex = currentExercises.findIndex((exercise) => {
+        return getSelectedKey(exercise) === key;
+      });
+      const nextIndex = currentIndex + direction;
+
+      if (
+        currentIndex === -1 ||
+        nextIndex < 0 ||
+        nextIndex >= currentExercises.length
+      ) {
+        return currentExercises;
+      }
+
+      const reorderedExercises = [...currentExercises];
+      const currentExercise = reorderedExercises[currentIndex];
+      reorderedExercises[currentIndex] = reorderedExercises[nextIndex];
+      reorderedExercises[nextIndex] = currentExercise;
+
+      return reorderedExercises;
+    });
+  }
+
   return (
     <form action={formAction} className="panel formPanel lessonForm">
       <input name="memberId" type="hidden" value={memberId} />
@@ -243,6 +267,25 @@ export default function LessonForm({ exerciseCategories, memberId }) {
                   <div className="selectedExerciseTitle">
                     <strong>{exercise.name}</strong>
                     <span>{exercise.categoryName}</span>
+                  </div>
+
+                  <div className="exerciseOrderControls">
+                    <button
+                      className="secondaryButton"
+                      disabled={index === 0}
+                      onClick={() => moveSelectedExercise(key, -1)}
+                      type="button"
+                    >
+                      위
+                    </button>
+                    <button
+                      className="secondaryButton"
+                      disabled={index === selectedExercises.length - 1}
+                      onClick={() => moveSelectedExercise(key, 1)}
+                      type="button"
+                    >
+                      아래
+                    </button>
                   </div>
 
                   <label>

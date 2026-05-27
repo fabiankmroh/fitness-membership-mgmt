@@ -469,7 +469,7 @@ textarea:focus {
 
 .selectedExerciseRow {
   display: grid;
-  grid-template-columns: minmax(150px, 1.4fr) repeat(3, minmax(90px, 0.7fr)) minmax(130px, 1fr) auto;
+  grid-template-columns: minmax(150px, 1.2fr) minmax(94px, auto) repeat(3, minmax(90px, 0.7fr)) minmax(130px, 1fr) auto;
   gap: 10px;
   align-items: end;
   border: 1px solid var(--line);
@@ -492,6 +492,17 @@ textarea:focus {
   color: var(--muted);
   font-size: 0.9rem;
   font-weight: 800;
+}
+
+.exerciseOrderControls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.exerciseOrderControls .secondaryButton {
+  min-height: 44px;
+  padding: 0 10px;
 }
 
 .selectedExerciseRow input {
