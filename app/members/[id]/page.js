@@ -13,8 +13,23 @@ function formatDate(date) {
   }).format(date);
 }
 
-export default async function MemberDetailPage({ params }) {
+function getSuccessMessage(member, searchParams) {
+  if (searchParams?.memberCreated === "1") {
+    return `${member.name} 회원님이 등록되었습니다.`;
+  }
+
+  const lessonNumber = Number(searchParams?.lessonCreated);
+
+  if (Number.isInteger(lessonNumber) && lessonNumber > 0) {
+    return `${member.name} 회원님의 ${lessonNumber}번째 레슨이 등록되었습니다.`;
+  }
+
+  return "";
+}
+
+export default async function MemberDetailPage({ params, searchParams }) {
   const { id } = await params;
+  const resolvedSearchParams = await searchParams;
   const member = await prisma.member.findUnique({
     where: {
       id
@@ -32,11 +47,19 @@ export default async function MemberDetailPage({ params }) {
     notFound();
   }
 
+  const successMessage = getSuccessMessage(member, resolvedSearchParams);
+
   return (
     <main className="shell narrowShell">
       <Link className="backLink" href="/members">
         ← 회원 목록
       </Link>
+
+      {successMessage ? (
+        <div className="successNotice" role="status">
+          {successMessage}
+        </div>
+      ) : null}
 
       <section className="pageHeader detailHeader">
         <div>

@@ -289,6 +289,17 @@ textarea:focus {
   text-decoration: none;
 }
 
+.successNotice {
+  margin-bottom: 18px;
+  border: 1px solid rgba(17, 122, 101, 0.24);
+  border-radius: 8px;
+  padding: 14px 16px;
+  color: var(--accent-dark);
+  background: rgba(237, 242, 238, 0.9);
+  font-weight: 800;
+  line-height: 1.45;
+}
+
 .lessonBadge {
   display: grid;
   gap: 4px;

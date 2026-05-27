@@ -46,7 +46,7 @@ export async function createMemberAction(formData) {
   });
 
   revalidatePath("/members");
-  redirect(`/members/${member.id}`);
+  redirect(`/members/${member.id}?memberCreated=1`);
 }
 
 export async function updateMemberAction(formData) {
@@ -146,5 +146,5 @@ export async function createLessonAction(formData) {
 
   revalidatePath("/members");
   revalidatePath(`/members/${memberId}`);
-  redirect(`/members/${memberId}/lessons/${lesson.id}`);
+  redirect(`/members/${memberId}?lessonCreated=${lesson.lessonNumber}`);
 }
