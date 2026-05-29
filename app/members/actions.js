@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { startTimer } from "@/lib/timing";
 
 function getRequiredText(formData, fieldName) {
   const value = String(formData.get(fieldName) || "").trim();
@@ -103,12 +104,14 @@ function getLessonExercises(formData) {
 }
 
 export async function createMemberAction(formData) {
+  const actionTimer = startTimer("createMemberAction");
   const totalLessons = getLessonNumber(formData, "totalLessons");
   const remainingLessons = Math.min(
     getLessonNumber(formData, "remainingLessons", totalLessons),
     totalLessons
   );
 
+  const queryTimer = startTimer("createMemberAction member.create");
   const member = await prisma.member.create({
     data: {
       name: getRequiredText(formData, "name"),
@@ -118,12 +121,15 @@ export async function createMemberAction(formData) {
       remainingLessons
     }
   });
+  queryTimer.end();
 
   revalidatePath("/members");
+  actionTimer.end();
   redirect(`/members/${member.id}?memberCreated=1`);
 }
 
 export async function updateMemberAction(formData) {
+  const actionTimer = startTimer("updateMemberAction");
   const id = getRequiredText(formData, "id");
   const totalLessons = getLessonNumber(formData, "totalLessons");
   const remainingLessons = Math.min(
@@ -131,6 +137,7 @@ export async function updateMemberAction(formData) {
     totalLessons
   );
 
+  const queryTimer = startTimer("updateMemberAction member.update");
   await prisma.member.update({
     where: {
       id
@@ -143,32 +150,44 @@ export async function updateMemberAction(formData) {
       remainingLessons
     }
   });
+  queryTimer.end();
 
   revalidatePath("/members");
   revalidatePath(`/members/${id}`);
+  actionTimer.end();
 }
 
 export async function deleteMemberAction(formData) {
+  const actionTimer = startTimer("deleteMemberAction");
   const id = getRequiredText(formData, "id");
 
+  const queryTimer = startTimer("deleteMemberAction member.delete");
   await prisma.member.delete({
     where: {
       id
     }
   });
+  queryTimer.end();
 
   revalidatePath("/members");
+  actionTimer.end();
   redirect("/members");
 }
 
 export async function createLessonAction(previousState, formData) {
+  const actionTimer = startTimer("createLessonAction");
+
   try {
     const memberId = getRequiredText(formData, "memberId");
     const lessonExercises = getLessonExercises(formData);
     const notes = getOptionalText(formData, "notes");
     const signatureData = getOptionalText(formData, "signatureData");
 
+    const transactionTimer = startTimer("createLessonAction transaction");
     const lesson = await prisma.$transaction(async (tx) => {
+      const memberQueryTimer = startTimer(
+        "createLessonAction transaction member.findUnique"
+      );
       const member = await tx.member.findUnique({
         where: {
           id: memberId
@@ -179,6 +198,7 @@ export async function createLessonAction(previousState, formData) {
           remainingLessons: true
         }
       });
+      memberQueryTimer.end();
 
       if (!member) {
         throw new Error("Member not found.");
@@ -190,6 +210,9 @@ export async function createLessonAction(previousState, formData) {
 
       const lessonNumber = member.totalLessons - member.remainingLessons + 1;
 
+      const updateTimer = startTimer(
+        "createLessonAction transaction member.updateMany"
+      );
       const updateResult = await tx.member.updateMany({
         where: {
           id: memberId,
@@ -203,12 +226,16 @@ export async function createLessonAction(previousState, formData) {
           }
         }
       });
+      updateTimer.end();
 
       if (updateResult.count !== 1) {
         throw new Error("No remaining lessons.");
       }
 
-      return tx.lessonLog.create({
+      const createLessonTimer = startTimer(
+        "createLessonAction transaction lessonLog.create"
+      );
+      const createdLesson = await tx.lessonLog.create({
         data: {
           memberId,
           lessonNumber,
@@ -219,10 +246,15 @@ export async function createLessonAction(previousState, formData) {
           signatureData
         }
       });
+      createLessonTimer.end();
+
+      return createdLesson;
     });
+    transactionTimer.end();
 
     revalidatePath("/members");
     revalidatePath(`/members/${memberId}`);
+    actionTimer.end();
 
     return {
       error: "",
@@ -230,6 +262,8 @@ export async function createLessonAction(previousState, formData) {
       redirectTo: `/members/${memberId}?lessonCreated=${lesson.lessonNumber}`
     };
   } catch (error) {
+    actionTimer.end("error");
+
     return {
       error:
         error.message === "No remaining lessons."

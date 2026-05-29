@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { deleteMemberAction, updateMemberAction } from "../actions";
 import DeleteMemberForm from "../DeleteMemberForm";
 import { prisma } from "@/lib/prisma";
+import { startTimer } from "@/lib/timing";
 
 export const dynamic = "force-dynamic";
 
@@ -49,8 +50,10 @@ function getSuccessMessage(member, searchParams) {
 }
 
 export default async function MemberDetailPage({ params, searchParams }) {
+  const pageTimer = startTimer("/members/[id] page");
   const { id } = await params;
   const resolvedSearchParams = await searchParams;
+  const queryTimer = startTimer("/members/[id] member.findUnique");
   const member = await prisma.member.findUnique({
     where: {
       id
@@ -74,12 +77,15 @@ export default async function MemberDetailPage({ params, searchParams }) {
       }
     }
   });
+  queryTimer.end();
 
   if (!member) {
+    pageTimer.end("notFound");
     notFound();
   }
 
   const successMessage = getSuccessMessage(member, resolvedSearchParams);
+  pageTimer.end();
 
   return (
     <main className="shell narrowShell">

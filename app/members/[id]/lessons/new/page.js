@@ -2,12 +2,17 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getExerciseCatalogForForm } from "@/lib/exerciseCatalog";
 import { prisma } from "@/lib/prisma";
+import { startTimer } from "@/lib/timing";
 import LessonForm from "../LessonForm";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewLessonPage({ params }) {
+  const pageTimer = startTimer("/members/[id]/lessons/new page");
   const { id } = await params;
+  const memberQueryTimer = startTimer(
+    "/members/[id]/lessons/new member.findUnique"
+  );
   const member = await prisma.member.findUnique({
     where: {
       id
@@ -19,15 +24,25 @@ export default async function NewLessonPage({ params }) {
       remainingLessons: true
     }
   });
+  memberQueryTimer.end();
 
   if (!member) {
+    pageTimer.end("notFound");
     notFound();
   }
 
   const canCreateLesson = member.remainingLessons > 0;
-  const exerciseCategories = canCreateLesson
-    ? await getExerciseCatalogForForm()
-    : [];
+  let exerciseCategories = [];
+
+  if (canCreateLesson) {
+    const catalogQueryTimer = startTimer(
+      "/members/[id]/lessons/new exerciseCatalog"
+    );
+    exerciseCategories = await getExerciseCatalogForForm();
+    catalogQueryTimer.end();
+  }
+
+  pageTimer.end();
 
   return (
     <main className="shell narrowShell">

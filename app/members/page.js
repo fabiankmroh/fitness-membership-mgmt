@@ -2,10 +2,13 @@ import Link from "next/link";
 import { createMemberAction, deleteMemberAction } from "./actions";
 import DeleteMemberForm from "./DeleteMemberForm";
 import { prisma } from "@/lib/prisma";
+import { startTimer } from "@/lib/timing";
 
 export const dynamic = "force-dynamic";
 
 export default async function MembersPage() {
+  const pageTimer = startTimer("/members page");
+  const queryTimer = startTimer("/members member.findMany");
   const members = await prisma.member.findMany({
     select: {
       id: true,
@@ -18,6 +21,8 @@ export default async function MembersPage() {
       updatedAt: "desc"
     }
   });
+  queryTimer.end();
+  pageTimer.end();
 
   return (
     <main className="shell">
