@@ -29,6 +29,16 @@ function getLessonNumber(formData, fieldName, fallback = 0) {
   return Math.floor(number);
 }
 
+function getRequiredPositiveInteger(formData, fieldName) {
+  const number = Number(formData.get(fieldName));
+
+  if (!Number.isInteger(number) || number <= 0) {
+    throw new Error(`${fieldName} must be a positive integer.`);
+  }
+
+  return number;
+}
+
 function getOptionalNumber(value) {
   if (value === undefined || value === null || value === "") {
     return null;
@@ -275,4 +285,225 @@ export async function createLessonAction(previousState, formData) {
       redirectTo: ""
     };
   }
+}
+
+export async function updateLessonAction(previousState, formData) {
+  const actionTimer = startTimer("updateLessonAction");
+
+  try {
+    const memberId = getRequiredText(formData, "memberId");
+    const lessonId = getRequiredText(formData, "lessonId");
+    const lessonExercises = getLessonExercises(formData);
+    const notes = getOptionalText(formData, "notes");
+    const signatureData = getOptionalText(formData, "signatureData");
+
+    const transactionTimer = startTimer("updateLessonAction transaction");
+    const lesson = await prisma.$transaction(async (tx) => {
+      const existingLesson = await tx.lessonLog.findUnique({
+        where: {
+          id: lessonId
+        },
+        select: {
+          id: true,
+          memberId: true
+        }
+      });
+
+      if (!existingLesson || existingLesson.memberId !== memberId) {
+        throw new Error("Lesson not found.");
+      }
+
+      await tx.lessonExercise.deleteMany({
+        where: {
+          lessonLogId: lessonId
+        }
+      });
+
+      return tx.lessonLog.update({
+        where: {
+          id: lessonId
+        },
+        data: {
+          exercises: {
+            create: lessonExercises
+          },
+          notes,
+          signatureData
+        }
+      });
+    });
+    transactionTimer.end();
+
+    revalidatePath("/members");
+    revalidatePath(`/members/${memberId}`);
+    revalidatePath(`/members/${memberId}/lessons/${lessonId}`);
+    actionTimer.end();
+
+    return {
+      error: "",
+      ok: true,
+      redirectTo: `/members/${memberId}/lessons/${lesson.id}?lessonUpdated=1`
+    };
+  } catch (error) {
+    actionTimer.end("error");
+
+    return {
+      error:
+        error.message === "At least one exercise is required."
+          ? "운동을 하나 이상 선택해 주세요."
+          : "레슨 수정 중 문제가 발생했습니다.",
+      ok: false,
+      redirectTo: ""
+    };
+  }
+}
+
+export async function deleteLessonAction(formData) {
+  const memberId = getRequiredText(formData, "memberId");
+  const lessonId = getRequiredText(formData, "lessonId");
+
+  await prisma.$transaction(async (tx) => {
+    const lesson = await tx.lessonLog.findUnique({
+      where: {
+        id: lessonId
+      },
+      select: {
+        id: true,
+        memberId: true
+      }
+    });
+
+    if (!lesson || lesson.memberId !== memberId) {
+      throw new Error("Lesson not found.");
+    }
+
+    const member = await tx.member.findUnique({
+      where: {
+        id: memberId
+      },
+      select: {
+        remainingLessons: true,
+        totalLessons: true
+      }
+    });
+
+    if (!member) {
+      throw new Error("Member not found.");
+    }
+
+    await tx.lessonLog.delete({
+      where: {
+        id: lessonId
+      }
+    });
+
+    await tx.member.update({
+      where: {
+        id: memberId
+      },
+      data: {
+        remainingLessons: Math.min(
+          member.remainingLessons + 1,
+          member.totalLessons
+        )
+      }
+    });
+  });
+
+  revalidatePath("/members");
+  revalidatePath(`/members/${memberId}`);
+  redirect(`/members/${memberId}?lessonDeleted=1`);
+}
+
+export async function createLessonCreditTransactionAction(formData) {
+  const memberId = getRequiredText(formData, "memberId");
+  const lessonCount = getRequiredPositiveInteger(formData, "lessonCount");
+  const memo = getOptionalText(formData, "memo");
+
+  await prisma.$transaction(async (tx) => {
+    await tx.lessonCreditTransaction.create({
+      data: {
+        memberId,
+        lessonCount,
+        memo
+      }
+    });
+
+    await tx.member.update({
+      where: {
+        id: memberId
+      },
+      data: {
+        remainingLessons: {
+          increment: lessonCount
+        },
+        totalLessons: {
+          increment: lessonCount
+        }
+      }
+    });
+  });
+
+  revalidatePath("/members");
+  revalidatePath(`/members/${memberId}`);
+  redirect(`/members/${memberId}?creditAdded=${lessonCount}`);
+}
+
+export async function deleteLessonCreditTransactionAction(formData) {
+  const memberId = getRequiredText(formData, "memberId");
+  const transactionId = getRequiredText(formData, "transactionId");
+
+  await prisma.$transaction(async (tx) => {
+    const transaction = await tx.lessonCreditTransaction.findUnique({
+      where: {
+        id: transactionId
+      },
+      select: {
+        id: true,
+        lessonCount: true,
+        memberId: true
+      }
+    });
+
+    if (!transaction || transaction.memberId !== memberId) {
+      throw new Error("Lesson credit transaction not found.");
+    }
+
+    const member = await tx.member.findUnique({
+      where: {
+        id: memberId
+      },
+      select: {
+        remainingLessons: true,
+        totalLessons: true
+      }
+    });
+
+    if (!member) {
+      throw new Error("Member not found.");
+    }
+
+    await tx.lessonCreditTransaction.delete({
+      where: {
+        id: transactionId
+      }
+    });
+
+    await tx.member.update({
+      where: {
+        id: memberId
+      },
+      data: {
+        remainingLessons: Math.max(
+          0,
+          member.remainingLessons - transaction.lessonCount
+        ),
+        totalLessons: Math.max(0, member.totalLessons - transaction.lessonCount)
+      }
+    });
+  });
+
+  revalidatePath("/members");
+  revalidatePath(`/members/${memberId}`);
+  redirect(`/members/${memberId}?creditDeleted=1`);
 }

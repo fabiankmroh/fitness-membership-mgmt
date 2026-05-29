@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { deleteLessonAction } from "../../../actions";
 import { prisma } from "@/lib/prisma";
+import DeleteLessonForm from "../DeleteLessonForm";
 
 export const dynamic = "force-dynamic";
 
@@ -23,8 +25,9 @@ function getExerciseCategoryName(exercise) {
   );
 }
 
-export default async function LessonDetailPage({ params }) {
+export default async function LessonDetailPage({ params, searchParams }) {
   const { id, lessonId } = await params;
+  const resolvedSearchParams = await searchParams;
   const lesson = await prisma.lessonLog.findUnique({
     where: {
       id: lessonId
@@ -62,11 +65,31 @@ export default async function LessonDetailPage({ params }) {
         ← {lesson.member.name} 회원 상세
       </Link>
 
+      {resolvedSearchParams?.lessonUpdated === "1" ? (
+        <div className="successNotice" role="status">
+          레슨 기록이 수정되었습니다.
+        </div>
+      ) : null}
+
       <section className="pageHeader">
         <div>
           <p className="eyebrow">Lesson Detail</p>
           <h1>Lesson #{lesson.lessonNumber}</h1>
           <p className="subtitle">{formatDate(lesson.createdAt)}</p>
+        </div>
+        <div className="detailActions">
+          <Link
+            className="secondaryButton"
+            href={`/members/${lesson.member.id}/lessons/${lesson.id}/edit`}
+          >
+            레슨 수정
+          </Link>
+          <DeleteLessonForm
+            action={deleteLessonAction}
+            lessonId={lesson.id}
+            lessonNumber={lesson.lessonNumber}
+            memberId={lesson.member.id}
+          />
         </div>
       </section>
 

@@ -2,10 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 
-export default function SignaturePad() {
+export default function SignaturePad({ initialSignatureData = "" }) {
   const canvasRef = useRef(null);
   const isDrawingRef = useRef(false);
-  const [signatureData, setSignatureData] = useState("");
+  const [signatureData, setSignatureData] = useState(initialSignatureData);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -27,6 +27,14 @@ export default function SignaturePad() {
       context.lineJoin = "round";
       context.lineWidth = 3;
       context.strokeStyle = "#17211b";
+
+      if (signatureData) {
+        const image = new Image();
+        image.onload = () => {
+          context.drawImage(image, 0, 0, rect.width, rect.height);
+        };
+        image.src = signatureData;
+      }
     }
 
     prepareCanvas();
@@ -35,7 +43,7 @@ export default function SignaturePad() {
     return () => {
       window.removeEventListener("resize", prepareCanvas);
     };
-  }, []);
+  }, [signatureData]);
 
   function getPoint(event) {
     const canvas = canvasRef.current;

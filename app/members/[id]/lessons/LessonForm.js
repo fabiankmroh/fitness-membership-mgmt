@@ -1,8 +1,8 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createLessonAction } from "../../actions";
+import { createLessonAction, updateLessonAction } from "../../actions";
 import SignaturePad from "./SignaturePad";
 
 const initialState = {
@@ -17,17 +17,27 @@ function getSelectedKey(exercise) {
     : `custom:${exercise.customId}`;
 }
 
-export default function LessonForm({ exerciseCategories, memberId }) {
+export default function LessonForm({
+  exerciseCategories,
+  initialNotes = "",
+  initialSelectedExercises = [],
+  initialSignatureData = "",
+  lessonId = "",
+  memberId,
+  mode = "create"
+}) {
   const router = useRouter();
-  const [state, formAction, isPending] = useActionState(
-    createLessonAction,
-    initialState
-  );
+  const dragStartYRef = useRef(0);
+  const action = mode === "edit" ? updateLessonAction : createLessonAction;
+  const [state, formAction, isPending] = useActionState(action, initialState);
   const [activeCategoryId, setActiveCategoryId] = useState(
     exerciseCategories[0]?.id || ""
   );
   const [customExerciseName, setCustomExerciseName] = useState("");
-  const [selectedExercises, setSelectedExercises] = useState([]);
+  const [draggingKey, setDraggingKey] = useState("");
+  const [selectedExercises, setSelectedExercises] = useState(
+    initialSelectedExercises
+  );
 
   const activeCategory = useMemo(() => {
     return (
@@ -152,9 +162,41 @@ export default function LessonForm({ exerciseCategories, memberId }) {
     });
   }
 
+  function startDragging(event, key) {
+    setDraggingKey(key);
+    dragStartYRef.current = event.clientY;
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function dragExercise(event, key) {
+    if (draggingKey !== key) {
+      return;
+    }
+
+    const distance = event.clientY - dragStartYRef.current;
+
+    if (Math.abs(distance) < 44) {
+      return;
+    }
+
+    moveSelectedExercise(key, distance > 0 ? 1 : -1);
+    dragStartYRef.current = event.clientY;
+  }
+
+  function stopDragging(event) {
+    if (draggingKey && event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+
+    setDraggingKey("");
+  }
+
   return (
     <form action={formAction} className="panel formPanel lessonForm">
       <input name="memberId" type="hidden" value={memberId} />
+      {mode === "edit" ? (
+        <input name="lessonId" type="hidden" value={lessonId} />
+      ) : null}
 
       {state.error ? (
         <div className="errorNotice" role="alert">
@@ -247,7 +289,14 @@ export default function LessonForm({ exerciseCategories, memberId }) {
               const key = getSelectedKey(exercise);
 
               return (
-                <article className="selectedExerciseRow" key={key}>
+                <article
+                  className={
+                    draggingKey === key
+                      ? "selectedExerciseRow dragging"
+                      : "selectedExerciseRow"
+                  }
+                  key={key}
+                >
                   <input
                     name="exerciseCatalogId"
                     type="hidden"
@@ -264,28 +313,21 @@ export default function LessonForm({ exerciseCategories, memberId }) {
                     value={exercise.customName}
                   />
 
+                  <button
+                    aria-label={`${exercise.name} 순서 변경`}
+                    className="dragHandle"
+                    onPointerCancel={stopDragging}
+                    onPointerDown={(event) => startDragging(event, key)}
+                    onPointerMove={(event) => dragExercise(event, key)}
+                    onPointerUp={stopDragging}
+                    type="button"
+                  >
+                    ☰
+                  </button>
+
                   <div className="selectedExerciseTitle">
                     <strong>{exercise.name}</strong>
                     <span>{exercise.categoryName}</span>
-                  </div>
-
-                  <div className="exerciseOrderControls">
-                    <button
-                      className="secondaryButton"
-                      disabled={index === 0}
-                      onClick={() => moveSelectedExercise(key, -1)}
-                      type="button"
-                    >
-                      위
-                    </button>
-                    <button
-                      className="secondaryButton"
-                      disabled={index === selectedExercises.length - 1}
-                      onClick={() => moveSelectedExercise(key, 1)}
-                      type="button"
-                    >
-                      아래
-                    </button>
                   </div>
 
                   <label>
@@ -366,13 +408,14 @@ export default function LessonForm({ exerciseCategories, memberId }) {
       <label>
         전체 메모
         <textarea
+          defaultValue={initialNotes}
           name="notes"
           placeholder="컨디션, 다음 수업에서 확인할 점, 주의사항 등을 적습니다."
           rows="4"
         />
       </label>
 
-      <SignaturePad />
+      <SignaturePad initialSignatureData={initialSignatureData} />
 
       <div className="formActions">
         <button
@@ -380,7 +423,13 @@ export default function LessonForm({ exerciseCategories, memberId }) {
           disabled={isPending || selectedExercises.length === 0}
           type="submit"
         >
-          {isPending ? "저장 중..." : "레슨 저장"}
+          {isPending
+            ? mode === "edit"
+              ? "수정 중..."
+              : "저장 중..."
+            : mode === "edit"
+              ? "레슨 수정 저장"
+              : "레슨 저장"}
         </button>
       </div>
     </form>

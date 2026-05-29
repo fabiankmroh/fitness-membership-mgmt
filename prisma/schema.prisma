@@ -15,15 +15,16 @@ datasource db {
 }
 
 model Member {
-  id               String      @id @default(cuid())
-  name             String
-  phone            String      @default("")
-  memo             String      @default("")
-  totalLessons     Int
-  remainingLessons Int
-  lessons          LessonLog[]
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
+  id                       String                    @id @default(cuid())
+  name                     String
+  phone                    String                    @default("")
+  memo                     String                    @default("")
+  totalLessons             Int
+  remainingLessons         Int
+  lessons                  LessonLog[]
+  lessonCreditTransactions LessonCreditTransaction[]
+  createdAt                DateTime                  @default(now())
+  updatedAt                DateTime                  @updatedAt
 }
 
 model LessonLog {
@@ -90,4 +91,17 @@ model LessonExercise {
   @@index([lessonLogId])
   @@index([exerciseCatalogId])
   @@index([customCategoryId])
+}
+
+model LessonCreditTransaction {
+  id          String   @id @default(cuid())
+  memberId    String
+  lessonCount Int
+  memo        String   @default("")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@index([memberId])
 }

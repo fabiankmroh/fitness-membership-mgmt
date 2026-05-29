@@ -1,6 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { deleteMemberAction, updateMemberAction } from "../actions";
+import {
+  createLessonCreditTransactionAction,
+  deleteLessonCreditTransactionAction,
+  deleteMemberAction,
+  updateMemberAction
+} from "../actions";
+import DeleteLessonCreditTransactionForm from "./DeleteLessonCreditTransactionForm";
 import DeleteMemberForm from "../DeleteMemberForm";
 import { prisma } from "@/lib/prisma";
 import { startTimer } from "@/lib/timing";
@@ -46,6 +52,20 @@ function getSuccessMessage(member, searchParams) {
     return `${member.name} 회원님의 ${lessonNumber}번째 레슨이 등록되었습니다.`;
   }
 
+  const creditAdded = Number(searchParams?.creditAdded);
+
+  if (Number.isInteger(creditAdded) && creditAdded > 0) {
+    return `${member.name} 회원님의 수업권 ${creditAdded}회가 추가되었습니다.`;
+  }
+
+  if (searchParams?.creditDeleted === "1") {
+    return "수업권 추가 기록이 삭제되고 레슨 수가 복구되었습니다.";
+  }
+
+  if (searchParams?.lessonDeleted === "1") {
+    return "레슨 기록이 삭제되고 잔여 레슨이 1회 복구되었습니다.";
+  }
+
   return "";
 }
 
@@ -74,6 +94,12 @@ export default async function MemberDetailPage({ params, searchParams }) {
             }
           }
         }
+      },
+      lessonCreditTransactions: {
+        orderBy: {
+          createdAt: "desc"
+        },
+        take: 10
       }
     }
   });
@@ -198,6 +224,67 @@ export default async function MemberDetailPage({ params, searchParams }) {
                   {formatDate(lesson.createdAt)}
                 </time>
               </Link>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="panel lessonCreditSection">
+        <div>
+          <p className="sectionLabel">Lesson Credits</p>
+          <h2>수업권 추가</h2>
+        </div>
+
+        <form
+          action={createLessonCreditTransactionAction}
+          className="lessonCreditForm"
+        >
+          <input name="memberId" type="hidden" value={member.id} />
+
+          <label>
+            추가 레슨
+            <input
+              min="1"
+              name="lessonCount"
+              placeholder="예: 30"
+              required
+              type="number"
+            />
+          </label>
+
+          <label>
+            메모
+            <input name="memo" placeholder="예: 30회 재등록" />
+          </label>
+
+          <button className="primaryButton" type="submit">
+            수업권 추가
+          </button>
+        </form>
+
+        {member.lessonCreditTransactions.length === 0 ? (
+          <div className="lessonEmpty">
+            <h3>아직 수업권 추가 기록이 없습니다.</h3>
+            <p>회원이 레슨을 추가 결제하면 이곳에 기록됩니다.</p>
+          </div>
+        ) : (
+          <div className="lessonCreditRows">
+            {member.lessonCreditTransactions.map((transaction) => (
+              <article className="lessonCreditRow" key={transaction.id}>
+                <div>
+                  <strong>+{transaction.lessonCount}회</strong>
+                  <span>{transaction.memo || "메모 없음"}</span>
+                </div>
+                <time dateTime={transaction.createdAt.toISOString()}>
+                  {formatDate(transaction.createdAt)}
+                </time>
+                <DeleteLessonCreditTransactionForm
+                  action={deleteLessonCreditTransactionAction}
+                  lessonCount={transaction.lessonCount}
+                  memberId={member.id}
+                  transactionId={transaction.id}
+                />
+              </article>
             ))}
           </div>
         )}
