@@ -205,6 +205,113 @@ textarea:focus {
   opacity: 0.7;
 }
 
+.skeletonLine,
+.skeletonBox,
+.skeletonCard,
+.skeletonBadge,
+.skeletonRow {
+  overflow: hidden;
+  position: relative;
+  border-radius: 8px;
+  background: #e6eee8;
+}
+
+.skeletonLine::after,
+.skeletonBox::after,
+.skeletonCard::after,
+.skeletonBadge::after,
+.skeletonRow::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.72),
+    transparent
+  );
+  content: "";
+  transform: translateX(-100%);
+  animation: skeletonSweep 1.35s ease-in-out infinite;
+}
+
+.skeletonPanel {
+  box-shadow: var(--shadow);
+}
+
+.skeletonLine {
+  height: 14px;
+  margin-bottom: 12px;
+}
+
+.skeletonLine.tiny {
+  width: 96px;
+}
+
+.skeletonLine.medium {
+  width: 180px;
+  height: 24px;
+}
+
+.skeletonLine.title {
+  width: min(360px, 82vw);
+  height: 58px;
+}
+
+.skeletonLine.subtitle {
+  width: min(520px, 88vw);
+}
+
+.backLinkSkeleton {
+  width: 110px;
+  margin-bottom: 22px;
+}
+
+.skeletonBox.input {
+  height: 52px;
+}
+
+.skeletonBox.textarea {
+  height: 120px;
+}
+
+.skeletonBox.button {
+  width: 130px;
+  height: 48px;
+}
+
+.skeletonBox.pill,
+.skeletonBox.choice {
+  width: 96px;
+  height: 44px;
+}
+
+.skeletonBox.choice {
+  width: 150px;
+}
+
+.skeletonBox.signature {
+  height: 260px;
+}
+
+.skeletonCard {
+  min-height: 118px;
+}
+
+.skeletonBadge {
+  min-width: 170px;
+  min-height: 102px;
+}
+
+.skeletonRow {
+  min-height: 58px;
+}
+
+@keyframes skeletonSweep {
+  to {
+    transform: translateX(100%);
+  }
+}
+
 .memberList {
   display: grid;
   gap: 14px;
