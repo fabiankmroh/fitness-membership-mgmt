@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getExerciseCatalogForForm } from "@/lib/exerciseCatalog";
+import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import LessonForm from "../../LessonForm";
 
@@ -11,10 +12,15 @@ function formatDecimal(value) {
 }
 
 export default async function EditLessonPage({ params }) {
+  const user = await requireUser();
   const { id, lessonId } = await params;
-  const lesson = await prisma.lessonLog.findUnique({
+  const lesson = await prisma.lessonLog.findFirst({
     where: {
-      id: lessonId
+      id: lessonId,
+      memberId: id,
+      member: {
+        ownerUserId: user.id
+      }
     },
     include: {
       member: {
@@ -39,7 +45,7 @@ export default async function EditLessonPage({ params }) {
     }
   });
 
-  if (!lesson || lesson.memberId !== id) {
+  if (!lesson) {
     notFound();
   }
 

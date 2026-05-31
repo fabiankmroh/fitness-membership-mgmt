@@ -8,6 +8,7 @@ import {
 } from "../actions";
 import DeleteLessonCreditTransactionForm from "./DeleteLessonCreditTransactionForm";
 import DeleteMemberForm from "../DeleteMemberForm";
+import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { startTimer } from "@/lib/timing";
 
@@ -70,13 +71,15 @@ function getSuccessMessage(member, searchParams) {
 }
 
 export default async function MemberDetailPage({ params, searchParams }) {
+  const user = await requireUser();
   const pageTimer = startTimer("/members/[id] page");
   const { id } = await params;
   const resolvedSearchParams = await searchParams;
   const queryTimer = startTimer("/members/[id] member.findUnique");
-  const member = await prisma.member.findUnique({
+  const member = await prisma.member.findFirst({
     where: {
-      id
+      id,
+      ownerUserId: user.id
     },
     include: {
       lessons: {

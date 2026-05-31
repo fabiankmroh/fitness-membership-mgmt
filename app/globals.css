@@ -53,6 +53,29 @@ button {
   padding: 42px 0 64px;
 }
 
+.authShell {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 40px 20px;
+}
+
+.authPanel {
+  display: grid;
+  gap: 22px;
+  width: min(440px, 100%);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 28px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: var(--shadow);
+}
+
+.loginForm {
+  display: grid;
+  gap: 18px;
+}
+
 .narrowShell {
   width: min(840px, calc(100% - 40px));
 }

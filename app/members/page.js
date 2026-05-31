@@ -1,15 +1,21 @@
 import Link from "next/link";
 import { createMemberAction, deleteMemberAction } from "./actions";
 import DeleteMemberForm from "./DeleteMemberForm";
+import LogoutForm from "./LogoutForm";
+import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { startTimer } from "@/lib/timing";
 
 export const dynamic = "force-dynamic";
 
 export default async function MembersPage() {
+  const user = await requireUser();
   const pageTimer = startTimer("/members page");
   const queryTimer = startTimer("/members member.findMany");
   const members = await prisma.member.findMany({
+    where: {
+      ownerUserId: user.id
+    },
     select: {
       id: true,
       name: true,
@@ -34,6 +40,7 @@ export default async function MembersPage() {
             회원 추가, 삭제, 잔여 레슨 횟수 관리를 먼저 안정적으로 만듭니다.
           </p>
         </div>
+        <LogoutForm email={user.email} />
       </section>
 
       <section className="gridTwo">

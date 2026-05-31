@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getExerciseCatalogForForm } from "@/lib/exerciseCatalog";
+import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { startTimer } from "@/lib/timing";
 import LessonForm from "../LessonForm";
@@ -8,14 +9,16 @@ import LessonForm from "../LessonForm";
 export const dynamic = "force-dynamic";
 
 export default async function NewLessonPage({ params }) {
+  const user = await requireUser();
   const pageTimer = startTimer("/members/[id]/lessons/new page");
   const { id } = await params;
   const memberQueryTimer = startTimer(
     "/members/[id]/lessons/new member.findUnique"
   );
-  const member = await prisma.member.findUnique({
+  const member = await prisma.member.findFirst({
     where: {
-      id
+      id,
+      ownerUserId: user.id
     },
     select: {
       id: true,

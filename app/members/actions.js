@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { startTimer } from "@/lib/timing";
 
@@ -114,6 +115,7 @@ function getLessonExercises(formData) {
 }
 
 export async function createMemberAction(formData) {
+  const user = await requireUser();
   const actionTimer = startTimer("createMemberAction");
   const totalLessons = getLessonNumber(formData, "totalLessons");
   const remainingLessons = Math.min(
@@ -124,6 +126,7 @@ export async function createMemberAction(formData) {
   const queryTimer = startTimer("createMemberAction member.create");
   const member = await prisma.member.create({
     data: {
+      ownerUserId: user.id,
       name: getRequiredText(formData, "name"),
       phone: getOptionalText(formData, "phone"),
       memo: getOptionalText(formData, "memo"),
@@ -139,6 +142,7 @@ export async function createMemberAction(formData) {
 }
 
 export async function updateMemberAction(formData) {
+  const user = await requireUser();
   const actionTimer = startTimer("updateMemberAction");
   const id = getRequiredText(formData, "id");
   const totalLessons = getLessonNumber(formData, "totalLessons");
@@ -148,9 +152,10 @@ export async function updateMemberAction(formData) {
   );
 
   const queryTimer = startTimer("updateMemberAction member.update");
-  await prisma.member.update({
+  const result = await prisma.member.updateMany({
     where: {
-      id
+      id,
+      ownerUserId: user.id
     },
     data: {
       name: getRequiredText(formData, "name"),
@@ -162,22 +167,32 @@ export async function updateMemberAction(formData) {
   });
   queryTimer.end();
 
+  if (result.count !== 1) {
+    throw new Error("Member not found.");
+  }
+
   revalidatePath("/members");
   revalidatePath(`/members/${id}`);
   actionTimer.end();
 }
 
 export async function deleteMemberAction(formData) {
+  const user = await requireUser();
   const actionTimer = startTimer("deleteMemberAction");
   const id = getRequiredText(formData, "id");
 
   const queryTimer = startTimer("deleteMemberAction member.delete");
-  await prisma.member.delete({
+  const result = await prisma.member.deleteMany({
     where: {
-      id
+      id,
+      ownerUserId: user.id
     }
   });
   queryTimer.end();
+
+  if (result.count !== 1) {
+    throw new Error("Member not found.");
+  }
 
   revalidatePath("/members");
   actionTimer.end();
@@ -185,6 +200,7 @@ export async function deleteMemberAction(formData) {
 }
 
 export async function createLessonAction(previousState, formData) {
+  const user = await requireUser();
   const actionTimer = startTimer("createLessonAction");
 
   try {
@@ -196,11 +212,12 @@ export async function createLessonAction(previousState, formData) {
     const transactionTimer = startTimer("createLessonAction transaction");
     const lesson = await prisma.$transaction(async (tx) => {
       const memberQueryTimer = startTimer(
-        "createLessonAction transaction member.findUnique"
+        "createLessonAction transaction member.findFirst"
       );
-      const member = await tx.member.findUnique({
+      const member = await tx.member.findFirst({
         where: {
-          id: memberId
+          id: memberId,
+          ownerUserId: user.id
         },
         select: {
           id: true,
@@ -226,6 +243,7 @@ export async function createLessonAction(previousState, formData) {
       const updateResult = await tx.member.updateMany({
         where: {
           id: memberId,
+          ownerUserId: user.id,
           remainingLessons: {
             gt: 0
           }
@@ -288,6 +306,7 @@ export async function createLessonAction(previousState, formData) {
 }
 
 export async function updateLessonAction(previousState, formData) {
+  const user = await requireUser();
   const actionTimer = startTimer("updateLessonAction");
 
   try {
@@ -299,9 +318,13 @@ export async function updateLessonAction(previousState, formData) {
 
     const transactionTimer = startTimer("updateLessonAction transaction");
     const lesson = await prisma.$transaction(async (tx) => {
-      const existingLesson = await tx.lessonLog.findUnique({
+      const existingLesson = await tx.lessonLog.findFirst({
         where: {
-          id: lessonId
+          id: lessonId,
+          memberId,
+          member: {
+            ownerUserId: user.id
+          }
         },
         select: {
           id: true,
@@ -309,7 +332,7 @@ export async function updateLessonAction(previousState, formData) {
         }
       });
 
-      if (!existingLesson || existingLesson.memberId !== memberId) {
+      if (!existingLesson) {
         throw new Error("Lesson not found.");
       }
 
@@ -359,6 +382,7 @@ export async function updateLessonAction(previousState, formData) {
 }
 
 export async function deleteLessonAction(formData) {
+  const user = await requireUser();
   const actionTimer = startTimer("deleteLessonAction");
   let memberId = "";
 
@@ -369,11 +393,15 @@ export async function deleteLessonAction(formData) {
     const transactionTimer = startTimer("deleteLessonAction transaction");
     await prisma.$transaction(async (tx) => {
       const lessonQueryTimer = startTimer(
-        "deleteLessonAction transaction lessonLog.findUnique"
+        "deleteLessonAction transaction lessonLog.findFirst"
       );
-      const lesson = await tx.lessonLog.findUnique({
+      const lesson = await tx.lessonLog.findFirst({
         where: {
-          id: lessonId
+          id: lessonId,
+          memberId,
+          member: {
+            ownerUserId: user.id
+          }
         },
         select: {
           id: true,
@@ -382,16 +410,17 @@ export async function deleteLessonAction(formData) {
       });
       lessonQueryTimer.end();
 
-      if (!lesson || lesson.memberId !== memberId) {
+      if (!lesson) {
         throw new Error("Lesson not found.");
       }
 
       const memberQueryTimer = startTimer(
-        "deleteLessonAction transaction member.findUnique"
+        "deleteLessonAction transaction member.findFirst"
       );
-      const member = await tx.member.findUnique({
+      const member = await tx.member.findFirst({
         where: {
-          id: memberId
+          id: memberId,
+          ownerUserId: user.id
         },
         select: {
           remainingLessons: true,
@@ -415,11 +444,12 @@ export async function deleteLessonAction(formData) {
       deleteTimer.end();
 
       const updateTimer = startTimer(
-        "deleteLessonAction transaction member.update"
+        "deleteLessonAction transaction member.updateMany"
       );
-      await tx.member.update({
+      const updateResult = await tx.member.updateMany({
         where: {
-          id: memberId
+          id: memberId,
+          ownerUserId: user.id
         },
         data: {
           remainingLessons: Math.min(
@@ -429,6 +459,10 @@ export async function deleteLessonAction(formData) {
         }
       });
       updateTimer.end();
+
+      if (updateResult.count !== 1) {
+        throw new Error("Member not found.");
+      }
     });
     transactionTimer.end();
 
@@ -444,11 +478,26 @@ export async function deleteLessonAction(formData) {
 }
 
 export async function createLessonCreditTransactionAction(formData) {
+  const user = await requireUser();
   const memberId = getRequiredText(formData, "memberId");
   const lessonCount = getRequiredPositiveInteger(formData, "lessonCount");
   const memo = getOptionalText(formData, "memo");
 
   await prisma.$transaction(async (tx) => {
+    const member = await tx.member.findFirst({
+      where: {
+        id: memberId,
+        ownerUserId: user.id
+      },
+      select: {
+        id: true
+      }
+    });
+
+    if (!member) {
+      throw new Error("Member not found.");
+    }
+
     await tx.lessonCreditTransaction.create({
       data: {
         memberId,
@@ -457,9 +506,10 @@ export async function createLessonCreditTransactionAction(formData) {
       }
     });
 
-    await tx.member.update({
+    const updateResult = await tx.member.updateMany({
       where: {
-        id: memberId
+        id: memberId,
+        ownerUserId: user.id
       },
       data: {
         remainingLessons: {
@@ -470,6 +520,10 @@ export async function createLessonCreditTransactionAction(formData) {
         }
       }
     });
+
+    if (updateResult.count !== 1) {
+      throw new Error("Member not found.");
+    }
   });
 
   revalidatePath("/members");
@@ -478,6 +532,7 @@ export async function createLessonCreditTransactionAction(formData) {
 }
 
 export async function deleteLessonCreditTransactionAction(formData) {
+  const user = await requireUser();
   const actionTimer = startTimer("deleteLessonCreditTransactionAction");
   let memberId = "";
 
@@ -490,11 +545,15 @@ export async function deleteLessonCreditTransactionAction(formData) {
     );
     await prisma.$transaction(async (tx) => {
       const creditQueryTimer = startTimer(
-        "deleteLessonCreditTransactionAction transaction lessonCreditTransaction.findUnique"
+        "deleteLessonCreditTransactionAction transaction lessonCreditTransaction.findFirst"
       );
-      const transaction = await tx.lessonCreditTransaction.findUnique({
+      const transaction = await tx.lessonCreditTransaction.findFirst({
         where: {
-          id: transactionId
+          id: transactionId,
+          memberId,
+          member: {
+            ownerUserId: user.id
+          }
         },
         select: {
           id: true,
@@ -504,16 +563,17 @@ export async function deleteLessonCreditTransactionAction(formData) {
       });
       creditQueryTimer.end();
 
-      if (!transaction || transaction.memberId !== memberId) {
+      if (!transaction) {
         throw new Error("Lesson credit transaction not found.");
       }
 
       const memberQueryTimer = startTimer(
-        "deleteLessonCreditTransactionAction transaction member.findUnique"
+        "deleteLessonCreditTransactionAction transaction member.findFirst"
       );
-      const member = await tx.member.findUnique({
+      const member = await tx.member.findFirst({
         where: {
-          id: memberId
+          id: memberId,
+          ownerUserId: user.id
         },
         select: {
           remainingLessons: true,
@@ -537,11 +597,12 @@ export async function deleteLessonCreditTransactionAction(formData) {
       deleteTimer.end();
 
       const updateTimer = startTimer(
-        "deleteLessonCreditTransactionAction transaction member.update"
+        "deleteLessonCreditTransactionAction transaction member.updateMany"
       );
-      await tx.member.update({
+      const updateResult = await tx.member.updateMany({
         where: {
-          id: memberId
+          id: memberId,
+          ownerUserId: user.id
         },
         data: {
           remainingLessons: Math.max(
@@ -555,6 +616,10 @@ export async function deleteLessonCreditTransactionAction(formData) {
         }
       });
       updateTimer.end();
+
+      if (updateResult.count !== 1) {
+        throw new Error("Member not found.");
+      }
     });
     transactionTimer.end();
 

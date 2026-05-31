@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { deleteLessonAction } from "../../../actions";
+import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import DeleteLessonForm from "../DeleteLessonForm";
 
@@ -26,11 +27,16 @@ function getExerciseCategoryName(exercise) {
 }
 
 export default async function LessonDetailPage({ params, searchParams }) {
+  const user = await requireUser();
   const { id, lessonId } = await params;
   const resolvedSearchParams = await searchParams;
-  const lesson = await prisma.lessonLog.findUnique({
+  const lesson = await prisma.lessonLog.findFirst({
     where: {
-      id: lessonId
+      id: lessonId,
+      memberId: id,
+      member: {
+        ownerUserId: user.id
+      }
     },
     include: {
       member: {
@@ -55,7 +61,7 @@ export default async function LessonDetailPage({ params, searchParams }) {
     }
   });
 
-  if (!lesson || lesson.memberId !== id) {
+  if (!lesson) {
     notFound();
   }
 
