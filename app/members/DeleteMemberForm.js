@@ -1,6 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { useFormStatus } from "react-dom";
+
+function DeleteSubmitButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <button className="dangerButton" disabled={pending} type="submit">
+      {pending ? "삭제 중..." : "삭제 확인"}
+    </button>
+  );
+}
 
 export default function DeleteMemberForm({
   action,
@@ -10,7 +21,6 @@ export default function DeleteMemberForm({
   memberName
 }) {
   const [isConfirming, setIsConfirming] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   function openConfirmation() {
     setIsConfirming(true);
@@ -24,7 +34,6 @@ export default function DeleteMemberForm({
     <div className={`deleteConfirm ${className}`}>
       <button
         className="dangerButton"
-        disabled={isSubmitting}
         onClick={openConfirmation}
         type="button"
       >
@@ -41,7 +50,6 @@ export default function DeleteMemberForm({
           <div className="confirmActions">
             <button
               className="secondaryButton"
-              disabled={isSubmitting}
               onClick={closeConfirmation}
               type="button"
             >
@@ -50,14 +58,7 @@ export default function DeleteMemberForm({
 
             <form action={action}>
               <input name="id" type="hidden" value={memberId} />
-              <button
-                className="dangerButton"
-                disabled={isSubmitting}
-                onClick={() => setIsSubmitting(true)}
-                type="submit"
-              >
-                {isSubmitting ? "삭제 중..." : "삭제 확인"}
-              </button>
+              <DeleteSubmitButton />
             </form>
           </div>
         </div>
