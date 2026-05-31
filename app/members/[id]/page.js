@@ -15,6 +15,7 @@ import { prisma } from "@/lib/prisma";
 import { startTimer } from "@/lib/timing";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 function formatDate(date) {
   return new Intl.DateTimeFormat("ko-KR", {
