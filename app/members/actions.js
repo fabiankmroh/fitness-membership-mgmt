@@ -1,8 +1,9 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { refresh, revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
+import { getRequiredFormattedPhone } from "@/lib/phone";
 import { prisma } from "@/lib/prisma";
 import { startTimer } from "@/lib/timing";
 
@@ -128,7 +129,7 @@ export async function createMemberAction(formData) {
     data: {
       ownerUserId: user.id,
       name: getRequiredText(formData, "name"),
-      phone: getOptionalText(formData, "phone"),
+      phone: getRequiredFormattedPhone(formData),
       memo: getOptionalText(formData, "memo"),
       totalLessons,
       remainingLessons
@@ -159,7 +160,7 @@ export async function updateMemberAction(formData) {
     },
     data: {
       name: getRequiredText(formData, "name"),
-      phone: getOptionalText(formData, "phone"),
+      phone: getRequiredFormattedPhone(formData),
       memo: getOptionalText(formData, "memo"),
       totalLessons,
       remainingLessons
@@ -282,6 +283,7 @@ export async function createLessonAction(previousState, formData) {
 
     revalidatePath("/members");
     revalidatePath(`/members/${memberId}`);
+    refresh();
     actionTimer.end();
 
     return {
@@ -528,6 +530,7 @@ export async function createLessonCreditTransactionAction(formData) {
 
   revalidatePath("/members");
   revalidatePath(`/members/${memberId}`);
+  refresh();
   redirect(`/members/${memberId}?creditAdded=${lessonCount}`);
 }
 
@@ -625,6 +628,7 @@ export async function deleteLessonCreditTransactionAction(formData) {
 
     revalidatePath("/members");
     revalidatePath(`/members/${memberId}`);
+    refresh();
     actionTimer.end();
   } catch (error) {
     actionTimer.end("error");

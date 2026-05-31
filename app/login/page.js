@@ -30,6 +30,24 @@ export default async function LoginPage({ searchParams }) {
           </div>
         ) : null}
 
+        {resolvedSearchParams?.created === "1" ? (
+          <div className="successNotice" role="status">
+            계정이 생성되었습니다. 로그인해 주세요.
+          </div>
+        ) : null}
+
+        {resolvedSearchParams?.passwordUpdated === "1" ? (
+          <div className="successNotice" role="status">
+            비밀번호가 변경되었습니다. 새 비밀번호로 로그인해 주세요.
+          </div>
+        ) : null}
+
+        {resolvedSearchParams?.error === "inactive" ? (
+          <div className="errorNotice" role="alert">
+            비활성화된 계정입니다. 관리자에게 문의해 주세요.
+          </div>
+        ) : null}
+
         <form action={loginAction} className="loginForm">
           <input name="next" type="hidden" value={next} />
 
@@ -58,6 +76,11 @@ export default async function LoginPage({ searchParams }) {
             로그인
           </button>
         </form>
+
+        <div className="authLinks">
+          <a href="/reset-password">비밀번호 재설정</a>
+          <a href="/signup">초대 코드로 계정 생성</a>
+        </div>
       </section>
     </main>
   );

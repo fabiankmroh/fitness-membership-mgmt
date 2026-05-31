@@ -3,6 +3,7 @@ import { createMemberAction, deleteMemberAction } from "./actions";
 import DeleteMemberForm from "./DeleteMemberForm";
 import LogoutForm from "./LogoutForm";
 import { requireUser } from "@/lib/auth";
+import { formatPhoneNumber } from "@/lib/phone";
 import { prisma } from "@/lib/prisma";
 import { startTimer } from "@/lib/timing";
 
@@ -10,6 +11,14 @@ export const dynamic = "force-dynamic";
 
 export default async function MembersPage() {
   const user = await requireUser();
+  const appUser = await prisma.appUser.findUnique({
+    where: {
+      id: user.id
+    },
+    select: {
+      role: true
+    }
+  });
   const pageTimer = startTimer("/members page");
   const queryTimer = startTimer("/members member.findMany");
   const members = await prisma.member.findMany({
@@ -40,7 +49,14 @@ export default async function MembersPage() {
             회원 추가, 삭제, 잔여 레슨 횟수 관리를 먼저 안정적으로 만듭니다.
           </p>
         </div>
-        <LogoutForm email={user.email} />
+        <div className="headerActions">
+          {appUser?.role === "MASTER" ? (
+            <Link className="secondaryButton" href="/admin/users">
+              사용자 관리
+            </Link>
+          ) : null}
+          <LogoutForm email={user.email} />
+        </div>
       </section>
 
       <section className="gridTwo">
@@ -57,7 +73,14 @@ export default async function MembersPage() {
 
           <label>
             연락처
-            <input name="phone" placeholder="예: 010-1234-5678" />
+            <input
+              maxLength="13"
+              name="phone"
+              pattern="010-[0-9]{4}-[0-9]{4}"
+              placeholder="예: 010-1234-5678"
+              required
+              title="010-1234-5678 형식으로 입력해 주세요."
+            />
           </label>
 
           <div className="lessonInputs">
@@ -117,7 +140,9 @@ export default async function MembersPage() {
                     <Link className="memberName" href={`/members/${member.id}`}>
                       {member.name}
                     </Link>
-                    <p className="muted">{member.phone || "연락처 없음"}</p>
+                    <p className="muted">
+                      {formatPhoneNumber(member.phone) || "연락처 없음"}
+                    </p>
                   </div>
 
                   <div className="lessonMeter">

@@ -76,6 +76,38 @@ button {
   gap: 18px;
 }
 
+.authLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.authLinks a,
+.authBackLink {
+  color: var(--accent-dark);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.headerActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.userCard {
+  grid-template-columns: minmax(180px, 1fr) minmax(160px, 220px) auto;
+}
+
+.userMeta {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-weight: 800;
+}
+
 .narrowShell {
   width: min(840px, calc(100% - 40px));
 }
@@ -642,11 +674,16 @@ textarea:focus {
   display: grid;
   grid-template-columns: 48px minmax(150px, 1.2fr) repeat(3, minmax(90px, 0.7fr)) minmax(130px, 1fr) auto;
   gap: 10px;
-  align-items: end;
+  align-items: center;
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 14px;
   background: #fbfdfb;
+}
+
+.selectedExerciseRow label,
+.selectedExerciseRow .selectedExerciseMemo {
+  align-self: end;
 }
 
 .selectedExerciseRow.dragging {
@@ -673,7 +710,9 @@ textarea:focus {
 .dragHandle {
   display: inline-flex;
   width: 44px;
+  height: 44px;
   min-height: 44px;
+  align-self: center;
   align-items: center;
   justify-content: center;
   border: 1px solid var(--line);
