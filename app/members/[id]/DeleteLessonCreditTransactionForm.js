@@ -1,7 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useFormStatus } from "react-dom";
+
+const initialState = {
+  error: "",
+  ok: false,
+  redirectTo: ""
+};
 
 function DeleteSubmitButton() {
   const { pending } = useFormStatus();
@@ -19,7 +26,18 @@ export default function DeleteLessonCreditTransactionForm({
   memberId,
   transactionId
 }) {
+  const router = useRouter();
   const [isConfirming, setIsConfirming] = useState(false);
+  const [state, formAction] = useActionState(action, initialState);
+
+  useEffect(() => {
+    if (!state.redirectTo) {
+      return;
+    }
+
+    router.refresh();
+    window.location.assign(state.redirectTo);
+  }, [router, state.redirectTo]);
 
   return (
     <div className="deleteConfirm">
@@ -36,6 +54,11 @@ export default function DeleteLessonCreditTransactionForm({
           <div>
             <h3>수업권 +{lessonCount}회 기록을 삭제할까요?</h3>
             <p>삭제하면 총 레슨과 잔여 레슨에서 {lessonCount}회가 차감됩니다.</p>
+            {state.error ? (
+              <p className="inlineError" role="alert">
+                {state.error}
+              </p>
+            ) : null}
           </div>
 
           <div className="confirmActions">
@@ -47,7 +70,7 @@ export default function DeleteLessonCreditTransactionForm({
               취소
             </button>
 
-            <form action={action}>
+            <form action={formAction}>
               <input name="memberId" type="hidden" value={memberId} />
               <input name="transactionId" type="hidden" value={transactionId} />
               <DeleteSubmitButton />

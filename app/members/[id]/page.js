@@ -8,6 +8,7 @@ import {
 } from "../actions";
 import DeleteLessonCreditTransactionForm from "./DeleteLessonCreditTransactionForm";
 import DeleteMemberForm from "../DeleteMemberForm";
+import PhoneInput from "../PhoneInput";
 import { requireUser } from "@/lib/auth";
 import { formatPhoneNumber } from "@/lib/phone";
 import { prisma } from "@/lib/prisma";
@@ -154,14 +155,7 @@ export default async function MemberDetailPage({ params, searchParams }) {
 
         <label>
           연락처
-          <input
-            defaultValue={formatPhoneNumber(member.phone)}
-            maxLength="13"
-            name="phone"
-            pattern="010-[0-9]{4}-[0-9]{4}"
-            required
-            title="010-1234-5678 형식으로 입력해 주세요."
-          />
+          <PhoneInput defaultValue={member.phone} />
         </label>
 
         <div className="lessonInputs">

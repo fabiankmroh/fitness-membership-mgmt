@@ -534,7 +534,7 @@ export async function createLessonCreditTransactionAction(formData) {
   redirect(`/members/${memberId}?creditAdded=${lessonCount}`);
 }
 
-export async function deleteLessonCreditTransactionAction(formData) {
+export async function deleteLessonCreditTransactionAction(previousState, formData) {
   const user = await requireUser();
   const actionTimer = startTimer("deleteLessonCreditTransactionAction");
   let memberId = "";
@@ -628,12 +628,20 @@ export async function deleteLessonCreditTransactionAction(formData) {
 
     revalidatePath("/members");
     revalidatePath(`/members/${memberId}`);
-    refresh();
     actionTimer.end();
   } catch (error) {
     actionTimer.end("error");
-    throw error;
+
+    return {
+      error: "수업권 기록 삭제 중 문제가 발생했습니다.",
+      ok: false,
+      redirectTo: ""
+    };
   }
 
-  redirect(`/members/${memberId}?creditDeleted=1`);
+  return {
+    error: "",
+    ok: true,
+    redirectTo: `/members/${memberId}?creditDeleted=1&refresh=${Date.now()}`
+  };
 }

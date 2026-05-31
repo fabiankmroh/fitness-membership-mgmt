@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createMemberAction, deleteMemberAction } from "./actions";
 import DeleteMemberForm from "./DeleteMemberForm";
 import LogoutForm from "./LogoutForm";
+import PhoneInput from "./PhoneInput";
 import { requireUser } from "@/lib/auth";
 import { formatPhoneNumber } from "@/lib/phone";
 import { prisma } from "@/lib/prisma";
@@ -73,14 +74,7 @@ export default async function MembersPage() {
 
           <label>
             연락처
-            <input
-              maxLength="13"
-              name="phone"
-              pattern="010-[0-9]{4}-[0-9]{4}"
-              placeholder="예: 010-1234-5678"
-              required
-              title="010-1234-5678 형식으로 입력해 주세요."
-            />
+            <PhoneInput />
           </label>
 
           <div className="lessonInputs">
