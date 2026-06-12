@@ -20,7 +20,8 @@ export const revalidate = 0;
 function formatDate(date) {
   return new Intl.DateTimeFormat("ko-KR", {
     dateStyle: "medium",
-    timeStyle: "short"
+    timeStyle: "short",
+    timeZone: "Asia/Seoul"
   }).format(date);
 }
 

@@ -10,7 +10,8 @@ export const dynamic = "force-dynamic";
 function formatDate(date) {
   return new Intl.DateTimeFormat("ko-KR", {
     dateStyle: "full",
-    timeStyle: "short"
+    timeStyle: "short",
+    timeZone: "Asia/Seoul"
   }).format(date);
 }
 

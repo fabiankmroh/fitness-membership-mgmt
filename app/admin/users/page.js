@@ -66,7 +66,8 @@ function getNotice(searchParams) {
 function formatShortDate(date) {
   return new Intl.DateTimeFormat("ko-KR", {
     dateStyle: "medium",
-    timeStyle: "short"
+    timeStyle: "short",
+    timeZone: "Asia/Seoul"
   }).format(date);
 }
 
