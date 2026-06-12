@@ -24,7 +24,7 @@ function assertStrongEnoughPassword(password) {
 }
 
 function redirectWithCreateError(errorCode) {
-  redirect(`/admin/users?error=${errorCode}`);
+  redirect(`/admin/users/new?error=${errorCode}`);
 }
 
 async function findAuthUserByEmail(supabase, email) {
@@ -144,6 +144,7 @@ export async function createTrainerAction(formData) {
     }
 
     revalidatePath("/admin/users");
+    revalidatePath("/admin/users/new");
     redirect("/admin/users?created=1");
   }
 
@@ -163,6 +164,7 @@ export async function createTrainerAction(formData) {
   }
 
   revalidatePath("/admin/users");
+  revalidatePath("/admin/users/new");
   redirect("/admin/users?created=1");
 }
 

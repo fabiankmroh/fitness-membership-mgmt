@@ -2,7 +2,6 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireMasterUser } from "@/lib/auth";
 import {
-  createTrainerAction,
   deleteTrainerAction,
   sendTrainerPasswordResetAction
 } from "./actions";
@@ -78,6 +77,9 @@ export default async function UserManagementPage({ searchParams }) {
             마스터 계정은 트레이너 계정을 만들고 삭제할 수 있습니다.
           </p>
         </div>
+        <Link className="primaryButton" href="/admin/users/new">
+          트레이너 생성
+        </Link>
       </section>
 
       {notice ? (
@@ -86,83 +88,49 @@ export default async function UserManagementPage({ searchParams }) {
         </div>
       ) : null}
 
-      <section className="gridTwo">
-        <form action={createTrainerAction} className="panel formPanel">
+      <section className="memberList userListSection">
+        <div className="listHeader">
           <div>
-            <p className="sectionLabel">새 트레이너</p>
-            <h2>계정 생성</h2>
+            <p className="sectionLabel">Users</p>
+            <h2>{users.length}명</h2>
           </div>
+        </div>
 
-          <label>
-            이름
-            <input autoComplete="name" name="name" required />
-          </label>
+        <div className="cards">
+          {users.map((appUser) => (
+            <article className="memberCard userCard" key={appUser.id}>
+              <div className="userIdentity">
+                <strong className="memberName">{appUser.name || appUser.email}</strong>
+                <p className="muted">{appUser.email}</p>
+              </div>
 
-          <label>
-            이메일
-            <input autoComplete="email" name="email" required type="email" />
-          </label>
+              <div className="userMeta">
+                <span>{appUser.role}</span>
+                <span>회원 {appUser._count.members}명</span>
+              </div>
 
-          <label>
-            임시 비밀번호
-            <input
-              autoComplete="new-password"
-              minLength="8"
-              name="password"
-              required
-              type="password"
-            />
-          </label>
+              <div className="cardActions">
+                <form action={sendTrainerPasswordResetAction}>
+                  <input name="userId" type="hidden" value={appUser.id} />
+                  <button className="secondaryButton" type="submit">
+                    비밀번호 재설정
+                  </button>
+                </form>
 
-          <button className="primaryButton" type="submit">
-            트레이너 생성
-          </button>
-        </form>
-
-        <section className="memberList">
-          <div className="listHeader">
-            <div>
-              <p className="sectionLabel">Users</p>
-              <h2>{users.length}명</h2>
-            </div>
-          </div>
-
-          <div className="cards">
-            {users.map((appUser) => (
-              <article className="memberCard userCard" key={appUser.id}>
-                <div className="userIdentity">
-                  <strong className="memberName">{appUser.name || appUser.email}</strong>
-                  <p className="muted">{appUser.email}</p>
-                </div>
-
-                <div className="userMeta">
-                  <span>{appUser.role}</span>
-                  <span>회원 {appUser._count.members}명</span>
-                </div>
-
-                <div className="cardActions">
-                  <form action={sendTrainerPasswordResetAction}>
-                    <input name="userId" type="hidden" value={appUser.id} />
-                    <button className="secondaryButton" type="submit">
-                      비밀번호 재설정
-                    </button>
-                  </form>
-
-                  <DeleteUserForm
-                    action={deleteTrainerAction}
-                    disabled={
-                      appUser.role === "MASTER" || appUser._count.members > 0
-                    }
-                    memberCount={appUser._count.members}
-                    userEmail={appUser.email}
-                    userId={appUser.id}
-                    userName={appUser.name}
-                  />
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
+                <DeleteUserForm
+                  action={deleteTrainerAction}
+                  disabled={
+                    appUser.role === "MASTER" || appUser._count.members > 0
+                  }
+                  memberCount={appUser._count.members}
+                  userEmail={appUser.email}
+                  userId={appUser.id}
+                  userName={appUser.name}
+                />
+              </div>
+            </article>
+          ))}
+        </div>
       </section>
     </main>
   );
