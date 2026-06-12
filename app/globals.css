@@ -497,13 +497,20 @@ textarea:focus {
 
 .transferMemberRow {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) minmax(160px, auto) minmax(360px, auto);
+  grid-template-columns: minmax(220px, 1fr) minmax(180px, auto) minmax(360px, auto);
   gap: 16px;
   align-items: center;
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 14px;
   background: #fbfdfb;
+}
+
+.transferMemberStats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
 }
 
 .transferMemberRow > div {
@@ -534,6 +541,44 @@ textarea:focus {
   background: #fbfdfb;
   font: inherit;
   font-weight: 800;
+}
+
+.compactButton {
+  min-height: 40px;
+  padding: 0 14px;
+}
+
+.adminLessonRows {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 8px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+
+.adminLessonRow {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr) 170px;
+  gap: 12px;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  background: #fff;
+  text-decoration: none;
+}
+
+.adminLessonRow span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adminLessonRow time {
+  color: var(--muted);
+  font-size: 0.92rem;
+  font-weight: 800;
+  text-align: right;
 }
 
 .emptyState {
@@ -1022,6 +1067,14 @@ textarea:focus {
 
   .transferMemberRow form {
     grid-template-columns: 1fr;
+  }
+
+  .adminLessonRow {
+    grid-template-columns: 1fr;
+  }
+
+  .adminLessonRow time {
+    text-align: left;
   }
 
   .cardActions {

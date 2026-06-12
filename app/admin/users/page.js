@@ -63,6 +63,29 @@ function getNotice(searchParams) {
   return null;
 }
 
+function formatShortDate(date) {
+  return new Intl.DateTimeFormat("ko-KR", {
+    dateStyle: "medium",
+    timeStyle: "short"
+  }).format(date);
+}
+
+function getExerciseName(exercise) {
+  return exercise.exerciseCatalog?.name || exercise.customName || "운동명 없음";
+}
+
+function getLessonSummary(lesson) {
+  if (lesson.notes) {
+    return lesson.notes;
+  }
+
+  if (lesson.exercises.length === 0) {
+    return "운동 기록 없음";
+  }
+
+  return lesson.exercises.map(getExerciseName).join(", ");
+}
+
 function UserMembersPanel({ selectedUser, transferTargets }) {
   if (!selectedUser) {
     return null;
@@ -95,9 +118,17 @@ function UserMembersPanel({ selectedUser, transferTargets }) {
                 <span>{formatPhoneNumber(member.phone) || "연락처 없음"}</span>
               </div>
 
-              <span>
-                {member.remainingLessons}회 남음 / {member.totalLessons}회
-              </span>
+              <div className="transferMemberStats">
+                <span>
+                  {member.remainingLessons}회 남음 / {member.totalLessons}회
+                </span>
+                <a
+                  className="secondaryButton compactButton"
+                  href={`/admin/users?selectedUserId=${selectedUser.id}&selectedMemberId=${member.id}`}
+                >
+                  레슨 보기
+                </a>
+              </div>
 
               <form action={transferMemberOwnerAction}>
                 <input name="memberId" type="hidden" value={member.id} />
@@ -126,6 +157,31 @@ function UserMembersPanel({ selectedUser, transferTargets }) {
                   이전
                 </button>
               </form>
+
+              {selectedUser.selectedMemberId === member.id ? (
+                <div className="adminLessonRows">
+                  {member.lessons.length === 0 ? (
+                    <div className="lessonEmpty">
+                      <h3>레슨 기록이 없습니다.</h3>
+                      <p>이 회원은 아직 등록된 레슨 기록이 없습니다.</p>
+                    </div>
+                  ) : (
+                    member.lessons.map((lesson) => (
+                      <a
+                        className="adminLessonRow"
+                        href={`/members/${member.id}/lessons/${lesson.id}`}
+                        key={lesson.id}
+                      >
+                        <strong>Lesson #{lesson.lessonNumber}</strong>
+                        <span>{getLessonSummary(lesson)}</span>
+                        <time dateTime={lesson.createdAt.toISOString()}>
+                          {formatShortDate(lesson.createdAt)}
+                        </time>
+                      </a>
+                    ))
+                  )}
+                </div>
+              ) : null}
             </article>
           ))}
         </div>
@@ -139,6 +195,7 @@ export default async function UserManagementPage({ searchParams }) {
   const resolvedSearchParams = await searchParams;
   const notice = getNotice(resolvedSearchParams);
   const selectedUserId = resolvedSearchParams?.selectedUserId || "";
+  const selectedMemberId = resolvedSearchParams?.selectedMemberId || "";
   const users = await prisma.appUser.findMany({
     include: {
       _count: {
@@ -164,12 +221,39 @@ export default async function UserManagementPage({ searchParams }) {
               name: true,
               phone: true,
               remainingLessons: true,
-              totalLessons: true
+              totalLessons: true,
+              lessons: {
+                orderBy: {
+                  createdAt: "desc"
+                },
+                select: {
+                  id: true,
+                  lessonNumber: true,
+                  notes: true,
+                  createdAt: true,
+                  exercises: {
+                    orderBy: {
+                      sortOrder: "asc"
+                    },
+                    take: 3,
+                    include: {
+                      exerciseCatalog: true
+                    }
+                  }
+                }
+              }
             }
           }
         }
       })
     : null;
+  const selectedUserWithMember =
+    selectedUser && selectedMemberId
+      ? {
+          ...selectedUser,
+          selectedMemberId
+        }
+      : selectedUser;
   const transferTargets = users.filter((appUser) => {
     return (
       appUser.id !== selectedUserId &&
@@ -255,7 +339,7 @@ export default async function UserManagementPage({ searchParams }) {
 
               {appUser.id === selectedUserId && selectedUser ? (
                 <UserMembersPanel
-                  selectedUser={selectedUser}
+                  selectedUser={selectedUserWithMember}
                   transferTargets={transferTargets}
                 />
               ) : null}
