@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireMasterUser } from "@/lib/auth";
+import { getSiteUrl } from "@/lib/siteUrl";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 function getRequiredText(formData, fieldName) {
@@ -25,10 +26,18 @@ function assertStrongEnoughPassword(password) {
 export async function createTrainerAction(formData) {
   await requireMasterUser();
 
-  const email = getRequiredText(formData, "email").toLowerCase();
-  const name = getRequiredText(formData, "name");
-  const password = String(formData.get("password") || "");
-  assertStrongEnoughPassword(password);
+  let email = "";
+  let name = "";
+  let password = "";
+
+  try {
+    email = getRequiredText(formData, "email").toLowerCase();
+    name = getRequiredText(formData, "name");
+    password = String(formData.get("password") || "");
+    assertStrongEnoughPassword(password);
+  } catch {
+    redirect("/admin/users?error=create");
+  }
 
   const supabase = createAdminClient();
   const { data, error } = await supabase.auth.admin.createUser({
@@ -61,6 +70,36 @@ export async function createTrainerAction(formData) {
 
   revalidatePath("/admin/users");
   redirect("/admin/users?created=1");
+}
+
+export async function sendTrainerPasswordResetAction(formData) {
+  await requireMasterUser();
+
+  const userId = getRequiredText(formData, "userId");
+  const appUser = await prisma.appUser.findUnique({
+    where: {
+      id: userId
+    },
+    select: {
+      email: true
+    }
+  });
+
+  if (!appUser) {
+    redirect("/admin/users?error=reset");
+  }
+
+  const supabase = createAdminClient();
+  const siteUrl = await getSiteUrl();
+  const { error } = await supabase.auth.resetPasswordForEmail(appUser.email, {
+    redirectTo: `${siteUrl}/auth/confirm?next=/update-password`
+  });
+
+  if (error) {
+    redirect("/admin/users?error=reset");
+  }
+
+  redirect("/admin/users?reset=1");
 }
 
 export async function deleteTrainerAction(formData) {

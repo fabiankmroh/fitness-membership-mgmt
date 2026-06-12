@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireMasterUser } from "@/lib/auth";
-import { createTrainerAction, deleteTrainerAction } from "./actions";
+import {
+  createTrainerAction,
+  deleteTrainerAction,
+  sendTrainerPasswordResetAction
+} from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +16,10 @@ function getNotice(searchParams) {
 
   if (searchParams?.deleted === "1") {
     return { kind: "successNotice", text: "트레이너 계정이 삭제되었습니다." };
+  }
+
+  if (searchParams?.reset === "1") {
+    return { kind: "successNotice", text: "비밀번호 재설정 이메일을 보냈습니다." };
   }
 
   if (searchParams?.error === "members") {
@@ -119,16 +127,27 @@ export default async function UserManagementPage({ searchParams }) {
                   <span>회원 {appUser._count.members}명</span>
                 </div>
 
-                <form action={deleteTrainerAction}>
-                  <input name="userId" type="hidden" value={appUser.id} />
-                  <button
-                    className="dangerButton"
-                    disabled={appUser.role === "MASTER" || appUser._count.members > 0}
-                    type="submit"
-                  >
-                    삭제
-                  </button>
-                </form>
+                <div className="cardActions">
+                  <form action={sendTrainerPasswordResetAction}>
+                    <input name="userId" type="hidden" value={appUser.id} />
+                    <button className="secondaryButton" type="submit">
+                      비밀번호 재설정
+                    </button>
+                  </form>
+
+                  <form action={deleteTrainerAction}>
+                    <input name="userId" type="hidden" value={appUser.id} />
+                    <button
+                      className="dangerButton"
+                      disabled={
+                        appUser.role === "MASTER" || appUser._count.members > 0
+                      }
+                      type="submit"
+                    >
+                      삭제
+                    </button>
+                  </form>
+                </div>
               </article>
             ))}
           </div>
