@@ -25,6 +25,13 @@ function formatDate(date) {
   }).format(date);
 }
 
+function formatDateOnly(date) {
+  return new Intl.DateTimeFormat("ko-KR", {
+    dateStyle: "medium",
+    timeZone: "Asia/Seoul"
+  }).format(date);
+}
+
 function getExerciseName(exercise) {
   return exercise.exerciseCatalog?.name || exercise.customName || "운동명 없음";
 }
@@ -263,6 +270,11 @@ export default async function MemberDetailPage({ params, searchParams }) {
             <input name="memo" placeholder="예: 30회 재등록" />
           </label>
 
+          <label>
+            유효기간
+            <input name="expiresAt" type="date" />
+          </label>
+
           <button className="primaryButton" type="submit">
             수업권 추가
           </button>
@@ -281,6 +293,11 @@ export default async function MemberDetailPage({ params, searchParams }) {
                   <strong>+{transaction.lessonCount}회</strong>
                   <span>{transaction.memo || "메모 없음"}</span>
                 </div>
+                <span>
+                  {transaction.expiresAt
+                    ? `유효기간 ${formatDateOnly(transaction.expiresAt)}`
+                    : "유효기간 없음"}
+                </span>
                 <time dateTime={transaction.createdAt.toISOString()}>
                   {formatDate(transaction.createdAt)}
                 </time>

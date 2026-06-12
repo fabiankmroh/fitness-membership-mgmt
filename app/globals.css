@@ -434,6 +434,11 @@ textarea:focus {
   font-weight: 750;
 }
 
+.memberMeters {
+  display: grid;
+  gap: 12px;
+}
+
 .meterTrack {
   overflow: hidden;
   height: 10px;
@@ -445,6 +450,44 @@ textarea:focus {
   height: 100%;
   border-radius: inherit;
   background: var(--accent);
+}
+
+.validityMeter {
+  display: grid;
+  gap: 8px;
+  color: #7c5b14;
+  font-weight: 800;
+}
+
+.validityMeter span {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.validityMeter small {
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 750;
+}
+
+.validityTrack {
+  background: #f7ead0;
+}
+
+.validityFill {
+  height: 100%;
+  border-radius: inherit;
+  background: #d89614;
+}
+
+.validityMeter.expired .validityFill,
+.validityMeter.empty .validityFill {
+  background: transparent;
+}
+
+.validityMeter.expired {
+  color: #b84f3f;
 }
 
 .cardActions,
@@ -730,7 +773,7 @@ textarea:focus {
 
 .lessonCreditForm {
   display: grid;
-  grid-template-columns: minmax(120px, 180px) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(120px, 160px) minmax(0, 1fr) minmax(150px, 180px) auto;
   gap: 10px;
   align-items: end;
 }
@@ -742,7 +785,7 @@ textarea:focus {
 
 .lessonCreditRow {
   display: grid;
-  grid-template-columns: minmax(150px, 1fr) 180px auto;
+  grid-template-columns: minmax(150px, 1fr) minmax(150px, 180px) 180px auto;
   gap: 14px;
   align-items: center;
   border: 1px solid var(--line);
@@ -1100,6 +1143,10 @@ textarea:focus {
 
   .lessonBadge {
     text-align: left;
+  }
+
+  .validityMeter span {
+    display: grid;
   }
 
   .lessonRows {

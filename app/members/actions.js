@@ -21,6 +21,22 @@ function getOptionalText(formData, fieldName) {
   return String(formData.get(fieldName) || "").trim();
 }
 
+function getOptionalKstEndOfDayDate(formData, fieldName) {
+  const value = getOptionalText(formData, fieldName);
+
+  if (!value) {
+    return null;
+  }
+
+  const date = new Date(`${value}T23:59:59.999+09:00`);
+
+  if (Number.isNaN(date.getTime())) {
+    throw new Error(`${fieldName} must be a valid date.`);
+  }
+
+  return date;
+}
+
 function getLessonNumber(formData, fieldName, fallback = 0) {
   const number = Number(formData.get(fieldName) || fallback);
 
@@ -484,6 +500,7 @@ export async function createLessonCreditTransactionAction(formData) {
   const memberId = getRequiredText(formData, "memberId");
   const lessonCount = getRequiredPositiveInteger(formData, "lessonCount");
   const memo = getOptionalText(formData, "memo");
+  const expiresAt = getOptionalKstEndOfDayDate(formData, "expiresAt");
 
   await prisma.$transaction(async (tx) => {
     const member = await tx.member.findFirst({
@@ -502,6 +519,7 @@ export async function createLessonCreditTransactionAction(formData) {
 
     await tx.lessonCreditTransaction.create({
       data: {
+        expiresAt,
         memberId,
         lessonCount,
         memo

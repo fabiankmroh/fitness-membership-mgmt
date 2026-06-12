@@ -119,10 +119,12 @@ model LessonCreditTransaction {
   memberId    String
   lessonCount Int
   memo        String   @default("")
+  expiresAt   DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
 
   @@index([memberId])
+  @@index([memberId, expiresAt])
 }

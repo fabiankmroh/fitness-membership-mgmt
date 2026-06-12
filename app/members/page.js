@@ -10,8 +10,62 @@ import { startTimer } from "@/lib/timing";
 
 export const dynamic = "force-dynamic";
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function clampPercentage(value) {
+  return Math.max(0, Math.min(100, Math.round(value)));
+}
+
+function formatDateOnly(date) {
+  return new Intl.DateTimeFormat("ko-KR", {
+    dateStyle: "medium",
+    timeZone: "Asia/Seoul"
+  }).format(date);
+}
+
+function getCreditValidityStatus(member, now) {
+  const expiringCredits = member.lessonCreditTransactions.filter(
+    (transaction) => transaction.expiresAt
+  );
+
+  if (expiringCredits.length === 0) {
+    return {
+      detail: "수업권 유효기간 미설정",
+      fillWidth: "0%",
+      label: "유효기간 없음",
+      state: "empty"
+    };
+  }
+
+  const activeCredit = expiringCredits.find(
+    (transaction) => transaction.expiresAt >= now
+  );
+  const credit = activeCredit || expiringCredits[expiringCredits.length - 1];
+  const expiresAt = credit.expiresAt;
+  const totalMs = Math.max(expiresAt.getTime() - credit.createdAt.getTime(), 1);
+  const remainingMs = Math.max(expiresAt.getTime() - now.getTime(), 0);
+  const remainingDays = Math.ceil(remainingMs / DAY_MS);
+
+  if (!activeCredit) {
+    return {
+      detail: `최근 만료 ${formatDateOnly(expiresAt)}`,
+      fillWidth: "0%",
+      label: "만료됨",
+      state: "expired"
+    };
+  }
+
+  return {
+    detail: `유효기간 ${formatDateOnly(expiresAt)}`,
+    fillWidth: `${clampPercentage((remainingMs / totalMs) * 100)}%`,
+    label: remainingDays <= 0 ? "오늘 만료" : `${remainingDays}일 남음`,
+    state: "active"
+  };
+}
+
 export default async function MembersPage() {
   const user = await requireUser();
+  const now = new Date();
   const appUser = await prisma.appUser.findUnique({
     where: {
       id: user.id
@@ -31,7 +85,21 @@ export default async function MembersPage() {
       name: true,
       phone: true,
       totalLessons: true,
-      remainingLessons: true
+      remainingLessons: true,
+      lessonCreditTransactions: {
+        where: {
+          expiresAt: {
+            not: null
+          }
+        },
+        orderBy: {
+          expiresAt: "asc"
+        },
+        select: {
+          createdAt: true,
+          expiresAt: true
+        }
+      }
     },
     orderBy: {
       updatedAt: "desc"
@@ -128,50 +196,69 @@ export default async function MembersPage() {
             </div>
           ) : (
             <div className="cards">
-              {members.map((member) => (
-                <article className="memberCard" key={member.id}>
-                  <div>
-                    <Link className="memberName" href={`/members/${member.id}`}>
-                      {member.name}
-                    </Link>
-                    <p className="muted">
-                      {formatPhoneNumber(member.phone) || "연락처 없음"}
-                    </p>
-                  </div>
+              {members.map((member) => {
+                const validityStatus = getCreditValidityStatus(member, now);
 
-                  <div className="lessonMeter">
-                    <span>
-                      {member.remainingLessons}회 남음 / {member.totalLessons}회
-                    </span>
-                    <div className="meterTrack">
-                      <div
-                        className="meterFill"
-                        style={{
-                          width:
-                            member.totalLessons === 0
-                              ? "0%"
-                              : `${Math.round(
-                                  (member.remainingLessons /
-                                    member.totalLessons) *
-                                    100
-                                )}%`
-                        }}
+                return (
+                  <article className="memberCard" key={member.id}>
+                    <div>
+                      <Link className="memberName" href={`/members/${member.id}`}>
+                        {member.name}
+                      </Link>
+                      <p className="muted">
+                        {formatPhoneNumber(member.phone) || "연락처 없음"}
+                      </p>
+                    </div>
+
+                    <div className="memberMeters">
+                      <div className="lessonMeter">
+                        <span>
+                          {member.remainingLessons}회 남음 / {member.totalLessons}회
+                        </span>
+                        <div className="meterTrack">
+                          <div
+                            className="meterFill"
+                            style={{
+                              width:
+                                member.totalLessons === 0
+                                  ? "0%"
+                                  : `${Math.round(
+                                      (member.remainingLessons /
+                                        member.totalLessons) *
+                                        100
+                                    )}%`
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className={`validityMeter ${validityStatus.state}`}>
+                        <span>
+                          {validityStatus.label}
+                          <small>{validityStatus.detail}</small>
+                        </span>
+                        <div className="meterTrack validityTrack">
+                          <div
+                            className="validityFill"
+                            style={{ width: validityStatus.fillWidth }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="cardActions">
+                      <Link className="secondaryButton" href={`/members/${member.id}`}>
+                        편집
+                      </Link>
+                      <DeleteMemberForm
+                        action={deleteMemberAction}
+                        memberId={member.id}
+                        memberName={member.name}
                       />
                     </div>
-                  </div>
-
-                  <div className="cardActions">
-                    <Link className="secondaryButton" href={`/members/${member.id}`}>
-                      편집
-                    </Link>
-                    <DeleteMemberForm
-                      action={deleteMemberAction}
-                      memberId={member.id}
-                      memberName={member.name}
-                    />
-                  </div>
-                </article>
-              ))}
+                  </article>
+                );
+              })}
             </div>
           )}
         </section>
