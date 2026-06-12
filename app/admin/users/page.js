@@ -6,6 +6,7 @@ import {
   deleteTrainerAction,
   sendTrainerPasswordResetAction
 } from "./actions";
+import DeleteUserForm from "./DeleteUserForm";
 
 export const dynamic = "force-dynamic";
 
@@ -135,18 +136,16 @@ export default async function UserManagementPage({ searchParams }) {
                     </button>
                   </form>
 
-                  <form action={deleteTrainerAction}>
-                    <input name="userId" type="hidden" value={appUser.id} />
-                    <button
-                      className="dangerButton"
-                      disabled={
-                        appUser.role === "MASTER" || appUser._count.members > 0
-                      }
-                      type="submit"
-                    >
-                      삭제
-                    </button>
-                  </form>
+                  <DeleteUserForm
+                    action={deleteTrainerAction}
+                    disabled={
+                      appUser.role === "MASTER" || appUser._count.members > 0
+                    }
+                    memberCount={appUser._count.members}
+                    userEmail={appUser.email}
+                    userId={appUser.id}
+                    userName={appUser.name}
+                  />
                 </div>
               </article>
             ))}

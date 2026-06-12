@@ -32,7 +32,7 @@ export default async function SignupPage({ searchParams }) {
         <form action={createTrainerWithInviteAction} className="loginForm">
           <label>
             초대 코드
-            <input name="inviteCode" required type="password" />
+            <input name="inviteCode" required type="text" />
           </label>
 
           <label>
@@ -51,6 +51,17 @@ export default async function SignupPage({ searchParams }) {
               autoComplete="new-password"
               minLength="8"
               name="password"
+              required
+              type="password"
+            />
+          </label>
+
+          <label>
+            비밀번호 확인
+            <input
+              autoComplete="new-password"
+              minLength="8"
+              name="passwordConfirm"
               required
               type="password"
             />

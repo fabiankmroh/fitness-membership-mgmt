@@ -36,7 +36,12 @@ export async function createTrainerWithInviteAction(formData) {
     const email = getRequiredText(formData, "email").toLowerCase();
     const name = getRequiredText(formData, "name");
     const password = String(formData.get("password") || "");
+    const passwordConfirm = String(formData.get("passwordConfirm") || "");
     assertStrongEnoughPassword(password);
+
+    if (password !== passwordConfirm) {
+      throw new Error("Password confirmation does not match.");
+    }
 
     const supabase = createAdminClient();
     const { data, error } = await supabase.auth.admin.createUser({
