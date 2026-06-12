@@ -471,21 +471,6 @@ textarea:focus {
   font-weight: 750;
 }
 
-.validityTrack {
-  background: #f7ead0;
-}
-
-.validityFill {
-  height: 100%;
-  border-radius: inherit;
-  background: #d89614;
-}
-
-.validityMeter.expired .validityFill,
-.validityMeter.empty .validityFill {
-  background: transparent;
-}
-
 .validityMeter.expired {
   color: #b84f3f;
 }

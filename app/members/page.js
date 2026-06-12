@@ -12,10 +12,6 @@ export const dynamic = "force-dynamic";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-function clampPercentage(value) {
-  return Math.max(0, Math.min(100, Math.round(value)));
-}
-
 function formatDateOnly(date) {
   return new Intl.DateTimeFormat("ko-KR", {
     dateStyle: "medium",
@@ -31,7 +27,6 @@ function getCreditValidityStatus(member, now) {
   if (expiringCredits.length === 0) {
     return {
       detail: "수업권 유효기간 미설정",
-      fillWidth: "0%",
       label: "유효기간 없음",
       state: "empty"
     };
@@ -42,14 +37,12 @@ function getCreditValidityStatus(member, now) {
   );
   const credit = activeCredit || expiringCredits[expiringCredits.length - 1];
   const expiresAt = credit.expiresAt;
-  const totalMs = Math.max(expiresAt.getTime() - credit.createdAt.getTime(), 1);
   const remainingMs = Math.max(expiresAt.getTime() - now.getTime(), 0);
   const remainingDays = Math.ceil(remainingMs / DAY_MS);
 
   if (!activeCredit) {
     return {
       detail: `최근 만료 ${formatDateOnly(expiresAt)}`,
-      fillWidth: "0%",
       label: "만료됨",
       state: "expired"
     };
@@ -57,7 +50,6 @@ function getCreditValidityStatus(member, now) {
 
   return {
     detail: `유효기간 ${formatDateOnly(expiresAt)}`,
-    fillWidth: `${clampPercentage((remainingMs / totalMs) * 100)}%`,
     label: remainingDays <= 0 ? "오늘 만료" : `${remainingDays}일 남음`,
     state: "active"
   };
@@ -237,12 +229,6 @@ export default async function MembersPage() {
                           {validityStatus.label}
                           <small>{validityStatus.detail}</small>
                         </span>
-                        <div className="meterTrack validityTrack">
-                          <div
-                            className="validityFill"
-                            style={{ width: validityStatus.fillWidth }}
-                          />
-                        </div>
                       </div>
                     </div>
 
