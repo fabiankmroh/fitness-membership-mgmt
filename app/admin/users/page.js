@@ -63,6 +63,77 @@ function getNotice(searchParams) {
   return null;
 }
 
+function UserMembersPanel({ selectedUser, transferTargets }) {
+  if (!selectedUser) {
+    return null;
+  }
+
+  return (
+    <section className="panel selectedUserPanel">
+      <div className="selectedUserHeader">
+        <div>
+          <p className="sectionLabel">Members</p>
+          <h2>{selectedUser.name || selectedUser.email}</h2>
+          <p className="muted">담당 회원 {selectedUser.members.length}명</p>
+        </div>
+        <a className="secondaryButton" href="/admin/users">
+          닫기
+        </a>
+      </div>
+
+      {selectedUser.members.length === 0 ? (
+        <div className="lessonEmpty">
+          <h3>담당 회원이 없습니다.</h3>
+          <p>이 계정은 삭제할 수 있습니다.</p>
+        </div>
+      ) : (
+        <div className="transferMemberRows">
+          {selectedUser.members.map((member) => (
+            <article className="transferMemberRow" key={member.id}>
+              <div>
+                <strong>{member.name}</strong>
+                <span>{formatPhoneNumber(member.phone) || "연락처 없음"}</span>
+              </div>
+
+              <span>
+                {member.remainingLessons}회 남음 / {member.totalLessons}회
+              </span>
+
+              <form action={transferMemberOwnerAction}>
+                <input name="memberId" type="hidden" value={member.id} />
+                <input
+                  name="fromUserId"
+                  type="hidden"
+                  value={selectedUser.id}
+                />
+                <select
+                  disabled={transferTargets.length === 0}
+                  name="toUserId"
+                  required
+                >
+                  <option value="">트레이너 선택</option>
+                  {transferTargets.map((target) => (
+                    <option key={target.id} value={target.id}>
+                      {target.name || target.email}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  className="primaryButton"
+                  disabled={transferTargets.length === 0}
+                  type="submit"
+                >
+                  이전
+                </button>
+              </form>
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 export default async function UserManagementPage({ searchParams }) {
   await requireMasterUser();
   const resolvedSearchParams = await searchParams;
@@ -142,114 +213,56 @@ export default async function UserManagementPage({ searchParams }) {
 
         <div className="cards">
           {users.map((appUser) => (
-            <article className="memberCard userCard" key={appUser.id}>
-              <div className="userIdentity">
-                <strong className="memberName">{appUser.name || appUser.email}</strong>
-                <p className="muted">{appUser.email}</p>
-              </div>
+            <div className="userCardGroup" key={appUser.id}>
+              <article className="memberCard userCard">
+                <div className="userIdentity">
+                  <strong className="memberName">{appUser.name || appUser.email}</strong>
+                  <p className="muted">{appUser.email}</p>
+                </div>
 
-              <div className="userMeta">
-                <span>{appUser.role}</span>
-                <span>회원 {appUser._count.members}명</span>
-              </div>
+                <div className="userMeta">
+                  <span>{appUser.role}</span>
+                  <span>회원 {appUser._count.members}명</span>
+                </div>
 
-              <div className="cardActions">
-                <a
-                  className="secondaryButton"
-                  href={`/admin/users?selectedUserId=${appUser.id}`}
-                >
-                  회원 보기
-                </a>
+                <div className="cardActions">
+                  <a
+                    className="secondaryButton"
+                    href={`/admin/users?selectedUserId=${appUser.id}`}
+                  >
+                    회원 보기
+                  </a>
 
-                <form action={sendTrainerPasswordResetAction}>
-                  <input name="userId" type="hidden" value={appUser.id} />
-                  <button className="secondaryButton" type="submit">
-                    비밀번호 재설정
-                  </button>
-                </form>
+                  <form action={sendTrainerPasswordResetAction}>
+                    <input name="userId" type="hidden" value={appUser.id} />
+                    <button className="secondaryButton" type="submit">
+                      비밀번호 재설정
+                    </button>
+                  </form>
 
-                <DeleteUserForm
-                  action={deleteTrainerAction}
-                  disabled={
-                    appUser.role === "MASTER" || appUser._count.members > 0
-                  }
-                  memberCount={appUser._count.members}
-                  userEmail={appUser.email}
-                  userId={appUser.id}
-                  userName={appUser.name}
+                  <DeleteUserForm
+                    action={deleteTrainerAction}
+                    disabled={
+                      appUser.role === "MASTER" || appUser._count.members > 0
+                    }
+                    memberCount={appUser._count.members}
+                    userEmail={appUser.email}
+                    userId={appUser.id}
+                    userName={appUser.name}
+                  />
+                </div>
+              </article>
+
+              {appUser.id === selectedUserId && selectedUser ? (
+                <UserMembersPanel
+                  selectedUser={selectedUser}
+                  transferTargets={transferTargets}
                 />
-              </div>
-            </article>
+              ) : null}
+            </div>
           ))}
         </div>
       </section>
-
-      {selectedUser ? (
-        <section className="panel selectedUserPanel">
-          <div className="selectedUserHeader">
-            <div>
-              <p className="sectionLabel">Members</p>
-              <h2>{selectedUser.name || selectedUser.email}</h2>
-              <p className="muted">
-                담당 회원 {selectedUser.members.length}명
-              </p>
-            </div>
-            <a className="secondaryButton" href="/admin/users">
-              닫기
-            </a>
-          </div>
-
-          {selectedUser.members.length === 0 ? (
-            <div className="lessonEmpty">
-              <h3>담당 회원이 없습니다.</h3>
-              <p>이 계정은 삭제할 수 있습니다.</p>
-            </div>
-          ) : (
-            <div className="transferMemberRows">
-              {selectedUser.members.map((member) => (
-                <article className="transferMemberRow" key={member.id}>
-                  <div>
-                    <strong>{member.name}</strong>
-                    <span>{formatPhoneNumber(member.phone) || "연락처 없음"}</span>
-                  </div>
-
-                  <span>
-                    {member.remainingLessons}회 남음 / {member.totalLessons}회
-                  </span>
-
-                  <form action={transferMemberOwnerAction}>
-                    <input name="memberId" type="hidden" value={member.id} />
-                    <input
-                      name="fromUserId"
-                      type="hidden"
-                      value={selectedUser.id}
-                    />
-                    <select
-                      disabled={transferTargets.length === 0}
-                      name="toUserId"
-                      required
-                    >
-                      <option value="">트레이너 선택</option>
-                      {transferTargets.map((target) => (
-                        <option key={target.id} value={target.id}>
-                          {target.name || target.email}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      className="primaryButton"
-                      disabled={transferTargets.length === 0}
-                      type="submit"
-                    >
-                      이전
-                    </button>
-                  </form>
-                </article>
-              ))}
-            </div>
-          )}
-        </section>
-      ) : null}
     </main>
   );
 }
