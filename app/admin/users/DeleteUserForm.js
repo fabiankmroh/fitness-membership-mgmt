@@ -46,8 +46,8 @@ export default function DeleteUserForm({
           <div>
             <h3>{userName || userEmail} 계정을 삭제할까요?</h3>
             <p>
-              삭제하면 이 사용자는 로그인할 수 없습니다. 담당 회원 {memberCount}명이
-              있으면 삭제가 차단됩니다.
+              삭제하면 이 사용자는 로그인할 수 없습니다. 담당 회원이 1명 이상이면
+              삭제가 차단됩니다. 현재 담당 회원은 {memberCount}명입니다.
             </p>
           </div>
 

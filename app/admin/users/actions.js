@@ -198,6 +198,52 @@ export async function sendTrainerPasswordResetAction(formData) {
   redirect("/admin/users?reset=1");
 }
 
+export async function transferMemberOwnerAction(formData) {
+  await requireMasterUser();
+
+  const memberId = getRequiredText(formData, "memberId");
+  const fromUserId = getRequiredText(formData, "fromUserId");
+  const toUserId = getRequiredText(formData, "toUserId");
+
+  if (fromUserId === toUserId) {
+    redirect(`/admin/users?selectedUserId=${fromUserId}&error=transfer`);
+  }
+
+  const targetTrainer = await prisma.appUser.findFirst({
+    where: {
+      id: toUserId,
+      role: "TRAINER",
+      isActive: true
+    },
+    select: {
+      id: true
+    }
+  });
+
+  if (!targetTrainer) {
+    redirect(`/admin/users?selectedUserId=${fromUserId}&error=target`);
+  }
+
+  const result = await prisma.member.updateMany({
+    where: {
+      id: memberId,
+      ownerUserId: fromUserId
+    },
+    data: {
+      ownerUserId: toUserId
+    }
+  });
+
+  if (result.count !== 1) {
+    redirect(`/admin/users?selectedUserId=${fromUserId}&error=transfer`);
+  }
+
+  revalidatePath("/admin/users");
+  revalidatePath("/members");
+  revalidatePath(`/members/${memberId}`);
+  redirect(`/admin/users?selectedUserId=${fromUserId}&transferred=1`);
+}
+
 export async function deleteTrainerAction(formData) {
   const { user } = await requireMasterUser();
   const userId = getRequiredText(formData, "userId");

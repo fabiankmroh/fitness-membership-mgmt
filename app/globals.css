@@ -472,6 +472,66 @@ textarea:focus {
   width: 100%;
 }
 
+.selectedUserPanel {
+  display: grid;
+  gap: 18px;
+  margin-top: 24px;
+  padding: 22px;
+}
+
+.selectedUserHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.transferMemberRows {
+  display: grid;
+  gap: 10px;
+}
+
+.transferMemberRow {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(160px, auto) minmax(360px, auto);
+  gap: 16px;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+  background: #fbfdfb;
+}
+
+.transferMemberRow > div {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.transferMemberRow span {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.transferMemberRow form {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.transferMemberRow select {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 12px;
+  color: var(--ink);
+  background: #fbfdfb;
+  font: inherit;
+  font-weight: 800;
+}
+
 .emptyState {
   padding: 28px;
 }
@@ -949,6 +1009,14 @@ textarea:focus {
   }
 
   .memberCard {
+    grid-template-columns: 1fr;
+  }
+
+  .transferMemberRow {
+    grid-template-columns: 1fr;
+  }
+
+  .transferMemberRow form {
     grid-template-columns: 1fr;
   }
 

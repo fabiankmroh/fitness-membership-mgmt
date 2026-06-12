@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireMasterUser } from "@/lib/auth";
+import { formatPhoneNumber } from "@/lib/phone";
 import {
   deleteTrainerAction,
-  sendTrainerPasswordResetAction
+  sendTrainerPasswordResetAction,
+  transferMemberOwnerAction
 } from "./actions";
 import DeleteUserForm from "./DeleteUserForm";
 
@@ -19,7 +21,9 @@ function getNotice(searchParams) {
     profile: "Auth 계정은 생성됐지만 앱 사용자 저장에 실패했습니다.",
     reset: "비밀번호 재설정 이메일을 보낼 수 없습니다.",
     "service-key": "Supabase service role key 설정을 확인해 주세요.",
-    self: "현재 로그인한 마스터 계정은 삭제할 수 없습니다."
+    self: "현재 로그인한 마스터 계정은 삭제할 수 없습니다.",
+    target: "이전할 대상 트레이너를 찾을 수 없습니다.",
+    transfer: "회원 담당자를 변경할 수 없습니다."
   };
 
   if (searchParams?.created === "1") {
@@ -32,6 +36,10 @@ function getNotice(searchParams) {
 
   if (searchParams?.reset === "1") {
     return { kind: "successNotice", text: "비밀번호 재설정 이메일을 보냈습니다." };
+  }
+
+  if (searchParams?.transferred === "1") {
+    return { kind: "successNotice", text: "회원 담당 트레이너를 변경했습니다." };
   }
 
   if (searchParams?.error && errorMessages[searchParams.error]) {
@@ -52,6 +60,7 @@ export default async function UserManagementPage({ searchParams }) {
   await requireMasterUser();
   const resolvedSearchParams = await searchParams;
   const notice = getNotice(resolvedSearchParams);
+  const selectedUserId = resolvedSearchParams?.selectedUserId || "";
   const users = await prisma.appUser.findMany({
     include: {
       _count: {
@@ -61,6 +70,34 @@ export default async function UserManagementPage({ searchParams }) {
       }
     },
     orderBy: [{ role: "asc" }, { createdAt: "asc" }]
+  });
+  const selectedUser = selectedUserId
+    ? await prisma.appUser.findUnique({
+        where: {
+          id: selectedUserId
+        },
+        include: {
+          members: {
+            orderBy: {
+              updatedAt: "desc"
+            },
+            select: {
+              id: true,
+              name: true,
+              phone: true,
+              remainingLessons: true,
+              totalLessons: true
+            }
+          }
+        }
+      })
+    : null;
+  const transferTargets = users.filter((appUser) => {
+    return (
+      appUser.id !== selectedUserId &&
+      appUser.role === "TRAINER" &&
+      appUser.isActive
+    );
   });
 
   return (
@@ -110,6 +147,13 @@ export default async function UserManagementPage({ searchParams }) {
               </div>
 
               <div className="cardActions">
+                <Link
+                  className="secondaryButton"
+                  href={`/admin/users?selectedUserId=${appUser.id}`}
+                >
+                  회원 보기
+                </Link>
+
                 <form action={sendTrainerPasswordResetAction}>
                   <input name="userId" type="hidden" value={appUser.id} />
                   <button className="secondaryButton" type="submit">
@@ -132,6 +176,73 @@ export default async function UserManagementPage({ searchParams }) {
           ))}
         </div>
       </section>
+
+      {selectedUser ? (
+        <section className="panel selectedUserPanel">
+          <div className="selectedUserHeader">
+            <div>
+              <p className="sectionLabel">Members</p>
+              <h2>{selectedUser.name || selectedUser.email}</h2>
+              <p className="muted">
+                담당 회원 {selectedUser.members.length}명
+              </p>
+            </div>
+            <Link className="secondaryButton" href="/admin/users">
+              닫기
+            </Link>
+          </div>
+
+          {selectedUser.members.length === 0 ? (
+            <div className="lessonEmpty">
+              <h3>담당 회원이 없습니다.</h3>
+              <p>이 계정은 삭제할 수 있습니다.</p>
+            </div>
+          ) : (
+            <div className="transferMemberRows">
+              {selectedUser.members.map((member) => (
+                <article className="transferMemberRow" key={member.id}>
+                  <div>
+                    <strong>{member.name}</strong>
+                    <span>{formatPhoneNumber(member.phone) || "연락처 없음"}</span>
+                  </div>
+
+                  <span>
+                    {member.remainingLessons}회 남음 / {member.totalLessons}회
+                  </span>
+
+                  <form action={transferMemberOwnerAction}>
+                    <input name="memberId" type="hidden" value={member.id} />
+                    <input
+                      name="fromUserId"
+                      type="hidden"
+                      value={selectedUser.id}
+                    />
+                    <select
+                      disabled={transferTargets.length === 0}
+                      name="toUserId"
+                      required
+                    >
+                      <option value="">트레이너 선택</option>
+                      {transferTargets.map((target) => (
+                        <option key={target.id} value={target.id}>
+                          {target.name || target.email}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      className="primaryButton"
+                      disabled={transferTargets.length === 0}
+                      type="submit"
+                    >
+                      이전
+                    </button>
+                  </form>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+      ) : null}
     </main>
   );
 }
