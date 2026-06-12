@@ -89,7 +89,6 @@ export default async function MemberDetailPage({ params, searchParams }) {
         orderBy: {
           createdAt: "desc"
         },
-        take: 10,
         include: {
           exercises: {
             orderBy: {

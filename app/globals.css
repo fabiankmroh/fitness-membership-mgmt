@@ -687,6 +687,10 @@ textarea:focus {
 .lessonRows {
   display: grid;
   gap: 10px;
+  max-height: min(520px, 62vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 4px;
 }
 
 .lessonRow {
@@ -1092,6 +1096,10 @@ textarea:focus {
 
   .lessonBadge {
     text-align: left;
+  }
+
+  .lessonRows {
+    max-height: min(460px, 58vh);
   }
 
   .lessonRow {
