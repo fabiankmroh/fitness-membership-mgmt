@@ -11,6 +11,18 @@ import DeleteUserForm from "./DeleteUserForm";
 export const dynamic = "force-dynamic";
 
 function getNotice(searchParams) {
+  const errorMessages = {
+    create: "트레이너 계정을 만들 수 없습니다. 서버 로그를 확인해 주세요.",
+    exists: "이미 등록된 이메일입니다.",
+    input: "이름, 이메일, 8자 이상 비밀번호를 입력해 주세요.",
+    members: "담당 회원이 있는 트레이너는 삭제할 수 없습니다.",
+    password: "비밀번호 조건을 만족하지 않습니다.",
+    profile: "Auth 계정은 생성됐지만 앱 사용자 저장에 실패했습니다.",
+    reset: "비밀번호 재설정 이메일을 보낼 수 없습니다.",
+    "service-key": "Supabase service role key 설정을 확인해 주세요.",
+    self: "현재 로그인한 마스터 계정은 삭제할 수 없습니다."
+  };
+
   if (searchParams?.created === "1") {
     return { kind: "successNotice", text: "트레이너 계정이 생성되었습니다." };
   }
@@ -23,10 +35,10 @@ function getNotice(searchParams) {
     return { kind: "successNotice", text: "비밀번호 재설정 이메일을 보냈습니다." };
   }
 
-  if (searchParams?.error === "members") {
+  if (searchParams?.error && errorMessages[searchParams.error]) {
     return {
       kind: "errorNotice",
-      text: "담당 회원이 있는 트레이너는 삭제할 수 없습니다."
+      text: errorMessages[searchParams.error]
     };
   }
 

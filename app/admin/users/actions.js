@@ -23,6 +23,60 @@ function assertStrongEnoughPassword(password) {
   }
 }
 
+function redirectWithCreateError(errorCode) {
+  redirect(`/admin/users?error=${errorCode}`);
+}
+
+async function findAuthUserByEmail(supabase, email) {
+  const normalizedEmail = email.toLowerCase();
+  let page = 1;
+
+  while (page <= 10) {
+    const { data, error } = await supabase.auth.admin.listUsers({
+      page,
+      perPage: 100
+    });
+
+    if (error) {
+      return null;
+    }
+
+    const user = data.users.find((item) => {
+      return item.email?.toLowerCase() === normalizedEmail;
+    });
+
+    if (user) {
+      return user;
+    }
+
+    if (data.users.length < 100) {
+      return null;
+    }
+
+    page += 1;
+  }
+
+  return null;
+}
+
+function getCreateErrorCode(error) {
+  const message = error?.message?.toLowerCase() || "";
+
+  if (message.includes("already") || message.includes("registered")) {
+    return "exists";
+  }
+
+  if (message.includes("password")) {
+    return "password";
+  }
+
+  if (message.includes("jwt") || message.includes("api key")) {
+    return "service-key";
+  }
+
+  return "create";
+}
+
 export async function createTrainerAction(formData) {
   await requireMasterUser();
 
@@ -36,7 +90,20 @@ export async function createTrainerAction(formData) {
     password = String(formData.get("password") || "");
     assertStrongEnoughPassword(password);
   } catch {
-    redirect("/admin/users?error=create");
+    redirectWithCreateError("input");
+  }
+
+  const existingAppUser = await prisma.appUser.findUnique({
+    where: {
+      email
+    },
+    select: {
+      id: true
+    }
+  });
+
+  if (existingAppUser) {
+    redirectWithCreateError("exists");
   }
 
   const supabase = createAdminClient();
@@ -51,7 +118,33 @@ export async function createTrainerAction(formData) {
   });
 
   if (error || !data.user) {
-    redirect("/admin/users?error=create");
+    if (getCreateErrorCode(error) !== "exists") {
+      console.error("Trainer auth creation failed:", error?.message || error);
+      redirectWithCreateError(getCreateErrorCode(error));
+    }
+
+    const existingAuthUser = await findAuthUserByEmail(supabase, email);
+
+    if (!existingAuthUser) {
+      redirectWithCreateError("exists");
+    }
+
+    try {
+      await prisma.appUser.create({
+        data: {
+          id: existingAuthUser.id,
+          email,
+          name,
+          role: "TRAINER"
+        }
+      });
+    } catch (profileError) {
+      console.error("Trainer profile recovery failed:", profileError);
+      redirectWithCreateError("profile");
+    }
+
+    revalidatePath("/admin/users");
+    redirect("/admin/users?created=1");
   }
 
   try {
@@ -63,9 +156,10 @@ export async function createTrainerAction(formData) {
         role: "TRAINER"
       }
     });
-  } catch {
+  } catch (profileError) {
+    console.error("Trainer profile creation failed:", profileError);
     await supabase.auth.admin.deleteUser(data.user.id);
-    redirect("/admin/users?error=create");
+    redirectWithCreateError("profile");
   }
 
   revalidatePath("/admin/users");
