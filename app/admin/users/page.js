@@ -130,7 +130,7 @@ export default async function UserManagementPage({ searchParams }) {
           <div className="cards">
             {users.map((appUser) => (
               <article className="memberCard userCard" key={appUser.id}>
-                <div>
+                <div className="userIdentity">
                   <strong className="memberName">{appUser.name || appUser.email}</strong>
                   <p className="muted">{appUser.email}</p>
                 </div>

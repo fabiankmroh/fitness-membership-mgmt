@@ -98,14 +98,32 @@ button {
 }
 
 .userCard {
-  grid-template-columns: minmax(220px, 1fr) minmax(140px, 180px) minmax(260px, auto);
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: stretch;
+}
+
+.userIdentity,
+.userMeta {
+  min-width: 0;
 }
 
 .userMeta {
-  display: grid;
-  gap: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
   color: var(--muted);
   font-weight: 800;
+}
+
+.userMeta span {
+  white-space: nowrap;
+}
+
+.userCard .memberName,
+.userCard .muted {
+  display: block;
+  overflow-wrap: anywhere;
 }
 
 .narrowShell {
@@ -435,12 +453,17 @@ textarea:focus {
 }
 
 .userCard .cardActions {
-  justify-content: flex-end;
+  align-items: stretch;
+  justify-content: flex-start;
 }
 
 .userCard .secondaryButton {
   min-width: 154px;
   white-space: nowrap;
+}
+
+.userCard .cardActions > * {
+  flex: 0 1 auto;
 }
 
 .emptyState {
