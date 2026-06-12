@@ -552,7 +552,11 @@ textarea:focus {
   display: grid;
   grid-column: 1 / -1;
   gap: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   border-top: 1px solid var(--line);
+  padding-right: 4px;
   padding-top: 12px;
 }
 
