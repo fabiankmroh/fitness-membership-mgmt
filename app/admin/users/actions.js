@@ -145,7 +145,7 @@ export async function createTrainerAction(formData) {
 
     revalidatePath("/admin/users");
     revalidatePath("/admin/users/new");
-    redirect("/admin/users?created=1");
+    redirect(`/admin/users?created=1&refresh=${Date.now()}`);
   }
 
   try {
@@ -165,7 +165,7 @@ export async function createTrainerAction(formData) {
 
   revalidatePath("/admin/users");
   revalidatePath("/admin/users/new");
-  redirect("/admin/users?created=1");
+  redirect(`/admin/users?created=1&refresh=${Date.now()}`);
 }
 
 export async function sendTrainerPasswordResetAction(formData) {
@@ -206,7 +206,9 @@ export async function transferMemberOwnerAction(formData) {
   const toUserId = getRequiredText(formData, "toUserId");
 
   if (fromUserId === toUserId) {
-    redirect(`/admin/users?selectedUserId=${fromUserId}&error=transfer`);
+    redirect(
+      `/admin/users?selectedUserId=${fromUserId}&error=transfer&refresh=${Date.now()}`
+    );
   }
 
   const targetTrainer = await prisma.appUser.findFirst({
@@ -221,7 +223,9 @@ export async function transferMemberOwnerAction(formData) {
   });
 
   if (!targetTrainer) {
-    redirect(`/admin/users?selectedUserId=${fromUserId}&error=target`);
+    redirect(
+      `/admin/users?selectedUserId=${fromUserId}&error=target&refresh=${Date.now()}`
+    );
   }
 
   const result = await prisma.member.updateMany({
@@ -235,13 +239,15 @@ export async function transferMemberOwnerAction(formData) {
   });
 
   if (result.count !== 1) {
-    redirect(`/admin/users?selectedUserId=${fromUserId}&error=transfer`);
+    redirect(
+      `/admin/users?selectedUserId=${fromUserId}&error=transfer&refresh=${Date.now()}`
+    );
   }
 
   revalidatePath("/admin/users");
   revalidatePath("/members");
   revalidatePath(`/members/${memberId}`);
-  redirect(`/admin/users?selectedUserId=${fromUserId}&transferred=1`);
+  redirect(`/admin/users?selectedUserId=${toUserId}&transferred=1&refresh=${Date.now()}`);
 }
 
 export async function deleteTrainerAction(formData) {

@@ -10,6 +10,7 @@ import {
 import DeleteUserForm from "./DeleteUserForm";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 function getNotice(searchParams) {
   const errorMessages = {
@@ -27,7 +28,10 @@ function getNotice(searchParams) {
   };
 
   if (searchParams?.created === "1") {
-    return { kind: "successNotice", text: "트레이너 계정이 생성되었습니다." };
+    return {
+      kind: "successNotice",
+      text: "트레이너 계정이 생성되었습니다. 목록에 새 사용자가 추가되었습니다."
+    };
   }
 
   if (searchParams?.deleted === "1") {
@@ -39,7 +43,10 @@ function getNotice(searchParams) {
   }
 
   if (searchParams?.transferred === "1") {
-    return { kind: "successNotice", text: "회원 담당 트레이너를 변경했습니다." };
+    return {
+      kind: "successNotice",
+      text: "회원 담당 트레이너를 변경했습니다. 새 담당 트레이너의 회원 목록을 열었습니다."
+    };
   }
 
   if (searchParams?.error && errorMessages[searchParams.error]) {
@@ -147,12 +154,12 @@ export default async function UserManagementPage({ searchParams }) {
               </div>
 
               <div className="cardActions">
-                <Link
+                <a
                   className="secondaryButton"
                   href={`/admin/users?selectedUserId=${appUser.id}`}
                 >
                   회원 보기
-                </Link>
+                </a>
 
                 <form action={sendTrainerPasswordResetAction}>
                   <input name="userId" type="hidden" value={appUser.id} />
@@ -187,9 +194,9 @@ export default async function UserManagementPage({ searchParams }) {
                 담당 회원 {selectedUser.members.length}명
               </p>
             </div>
-            <Link className="secondaryButton" href="/admin/users">
+            <a className="secondaryButton" href="/admin/users">
               닫기
-            </Link>
+            </a>
           </div>
 
           {selectedUser.members.length === 0 ? (
