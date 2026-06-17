@@ -266,7 +266,7 @@ export default async function UserManagementPage({ searchParams }) {
   return (
     <main className="shell">
       <Link className="backLink" href="/members">
-        ← 회원 목록
+        ← 홈
       </Link>
 
       <section className="pageHeader">

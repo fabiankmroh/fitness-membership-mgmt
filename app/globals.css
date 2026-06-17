@@ -404,6 +404,93 @@ textarea:focus {
   gap: 14px;
 }
 
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.statCard {
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: var(--shadow);
+}
+
+.statCard span {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.statCard strong {
+  color: var(--ink);
+  font-size: 2.35rem;
+  line-height: 1;
+}
+
+.statCard small {
+  color: var(--muted);
+  font-weight: 750;
+}
+
+.dashboardGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.dashboardPanel {
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+}
+
+.dashboardPanelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.dashboardPanelHeader strong {
+  color: var(--accent-dark);
+  font-size: 1.8rem;
+}
+
+.dashboardMeter {
+  height: 14px;
+}
+
+.dashboardRows {
+  display: grid;
+  gap: 10px;
+}
+
+.dashboardRow {
+  display: flex;
+  min-height: 52px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 14px;
+  background: #fbfdfb;
+  text-decoration: none;
+}
+
+.dashboardRow span {
+  color: var(--muted);
+  font-weight: 800;
+}
+
 .memberCard {
   display: grid;
   grid-template-columns: minmax(160px, 1fr) minmax(220px, 300px) auto;
@@ -1139,6 +1226,17 @@ textarea:focus {
 
   .gridTwo {
     grid-template-columns: 1fr;
+  }
+
+  .statsGrid,
+  .dashboardGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboardPanelHeader,
+  .dashboardRow {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .memberCard {

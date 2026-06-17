@@ -1,10 +1,6 @@
 import Link from "next/link";
-import { createMemberAction, deleteMemberAction } from "./actions";
-import DeleteMemberForm from "./DeleteMemberForm";
 import LogoutForm from "./LogoutForm";
-import PhoneInput from "./PhoneInput";
 import { requireUser } from "@/lib/auth";
-import { formatPhoneNumber } from "@/lib/phone";
 import { prisma } from "@/lib/prisma";
 import { startTimer } from "@/lib/timing";
 
@@ -12,102 +8,25 @@ export const dynamic = "force-dynamic";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-function formatDateOnly(date) {
-  return new Intl.DateTimeFormat("ko-KR", {
-    dateStyle: "medium",
-    timeZone: "Asia/Seoul"
-  }).format(date);
-}
-
-function getCreditValidityStatus(member, now) {
+function getValidityStatus(member, now) {
   const expiringCredits = member.lessonCreditTransactions.filter(
     (transaction) => transaction.expiresAt
   );
 
   if (expiringCredits.length === 0) {
-    return {
-      detail: "수업권 유효기간 미설정",
-      label: "유효기간 없음",
-      state: "empty"
-    };
+    return "empty";
   }
 
-  const activeCredit = expiringCredits.find(
-    (transaction) => transaction.expiresAt >= now
-  );
-  const credit = activeCredit || expiringCredits[expiringCredits.length - 1];
-  const expiresAt = credit.expiresAt;
-  const remainingMs = Math.max(expiresAt.getTime() - now.getTime(), 0);
-  const remainingDays = Math.ceil(remainingMs / DAY_MS);
-
-  if (!activeCredit) {
-    return {
-      detail: `최근 만료 ${formatDateOnly(expiresAt)}`,
-      label: "만료됨",
-      state: "expired"
-    };
-  }
-
-  return {
-    detail: `유효기간 ${formatDateOnly(expiresAt)}`,
-    label: remainingDays <= 0 ? "오늘 만료" : `${remainingDays}일 남음`,
-    state: "active"
-  };
+  return expiringCredits.some((transaction) => transaction.expiresAt >= now)
+    ? "active"
+    : "expired";
 }
 
-function MemberCard({ member, validityStatus }) {
-  return (
-    <article className="memberCard" key={member.id}>
-      <div>
-        <Link className="memberName" href={`/members/${member.id}`}>
-          {member.name}
-        </Link>
-        <p className="muted">{formatPhoneNumber(member.phone) || "연락처 없음"}</p>
-      </div>
-
-      <div className="memberMeters">
-        <div className="lessonMeter">
-          <span>
-            {member.remainingLessons}회 남음 / {member.totalLessons}회
-          </span>
-          <div className="meterTrack">
-            <div
-              className="meterFill"
-              style={{
-                width:
-                  member.totalLessons === 0
-                    ? "0%"
-                    : `${Math.round(
-                        (member.remainingLessons / member.totalLessons) * 100
-                      )}%`
-              }}
-            />
-          </div>
-        </div>
-
-        <div className={`validityMeter ${validityStatus.state}`}>
-          <span>
-            {validityStatus.label}
-            <small>{validityStatus.detail}</small>
-          </span>
-        </div>
-      </div>
-
-      <div className="cardActions">
-        <Link className="secondaryButton" href={`/members/${member.id}`}>
-          편집
-        </Link>
-        <DeleteMemberForm
-          action={deleteMemberAction}
-          memberId={member.id}
-          memberName={member.name}
-        />
-      </div>
-    </article>
-  );
+function getDaysUntil(date, now) {
+  return Math.ceil(Math.max(date.getTime() - now.getTime(), 0) / DAY_MS);
 }
 
-export default async function MembersPage() {
+export default async function MembersHomePage() {
   const user = await requireUser();
   const now = new Date();
   const appUser = await prisma.appUser.findUnique({
@@ -118,8 +37,8 @@ export default async function MembersPage() {
       role: true
     }
   });
-  const pageTimer = startTimer("/members page");
-  const queryTimer = startTimer("/members member.findMany");
+  const pageTimer = startTimer("/members dashboard page");
+  const queryTimer = startTimer("/members dashboard member.findMany");
   const members = await prisma.member.findMany({
     where: {
       ownerUserId: user.id
@@ -127,7 +46,6 @@ export default async function MembersPage() {
     select: {
       id: true,
       name: true,
-      phone: true,
       totalLessons: true,
       remainingLessons: true,
       lessonCreditTransactions: {
@@ -140,39 +58,66 @@ export default async function MembersPage() {
           expiresAt: "asc"
         },
         select: {
-          createdAt: true,
           expiresAt: true
         }
       }
-    },
-    orderBy: {
-      updatedAt: "desc"
     }
   });
   queryTimer.end();
   pageTimer.end();
-  const membersWithValidity = members.map((member) => ({
-    ...member,
-    validityStatus: getCreditValidityStatus(member, now)
-  }));
-  const activeMembers = membersWithValidity.filter(
-    (member) => member.validityStatus.state !== "expired"
+
+  const totalMembers = members.length;
+  const activeMembers = members.filter(
+    (member) => getValidityStatus(member, now) !== "expired"
   );
-  const expiredMembers = membersWithValidity.filter(
-    (member) => member.validityStatus.state === "expired"
+  const expiredMembers = members.filter(
+    (member) => getValidityStatus(member, now) === "expired"
   );
+  const totalLessons = members.reduce(
+    (sum, member) => sum + member.totalLessons,
+    0
+  );
+  const remainingLessons = members.reduce(
+    (sum, member) => sum + member.remainingLessons,
+    0
+  );
+  const usedLessons = Math.max(totalLessons - remainingLessons, 0);
+  const lowLessonMembers = activeMembers
+    .filter((member) => member.remainingLessons <= 3)
+    .sort((first, second) => first.remainingLessons - second.remainingLessons);
+  const expiringMembers = activeMembers
+    .map((member) => {
+      const nextExpiration = member.lessonCreditTransactions.find(
+        (transaction) => transaction.expiresAt >= now
+      );
+
+      return nextExpiration
+        ? {
+            ...member,
+            daysLeft: getDaysUntil(nextExpiration.expiresAt, now)
+          }
+        : null;
+    })
+    .filter(Boolean)
+    .filter((member) => member.daysLeft <= 14)
+    .sort((first, second) => first.daysLeft - second.daysLeft);
+  const lessonUsagePercent =
+    totalLessons === 0 ? 0 : Math.round((usedLessons / totalLessons) * 100);
 
   return (
     <main className="shell">
       <section className="pageHeader">
         <div>
-          <p className="eyebrow">{"Member -> Manage"}</p>
-          <h1>피트니스 회원 명부</h1>
+          <p className="eyebrow">Home</p>
+          <h1>운영 현황</h1>
           <p className="subtitle">
-            회원 추가, 삭제, 잔여 레슨 횟수 관리를 먼저 안정적으로 만듭니다.
+            회원 수, 잔여 레슨, 만료 상태를 한 화면에서 확인합니다.
           </p>
         </div>
         <div className="headerActions">
+          <Link className="primaryButton" href="/members/manage">
+            회원 등록/목록
+          </Link>
           {appUser?.role === "MASTER" ? (
             <Link className="secondaryButton" href="/admin/users">
               사용자 관리
@@ -182,112 +127,91 @@ export default async function MembersPage() {
         </div>
       </section>
 
-      <section className="gridTwo">
-        <form action={createMemberAction} className="panel formPanel">
+      <section className="statsGrid">
+        <article className="statCard">
+          <span>활성 회원</span>
+          <strong>{activeMembers.length}명</strong>
+          <small>전체 {totalMembers}명</small>
+        </article>
+        <article className="statCard">
+          <span>잔여 레슨</span>
+          <strong>{remainingLessons}회</strong>
+          <small>총 {totalLessons}회 중 {usedLessons}회 사용</small>
+        </article>
+        <article className="statCard">
+          <span>만료 회원</span>
+          <strong>{expiredMembers.length}명</strong>
+          <small>회원 목록 화면에서 펼쳐 확인</small>
+        </article>
+      </section>
+
+      <section className="panel dashboardPanel">
+        <div className="dashboardPanelHeader">
           <div>
-            <p className="sectionLabel">새 회원</p>
-            <h2>회원 등록</h2>
+            <p className="sectionLabel">Lesson Usage</p>
+            <h2>레슨 사용률</h2>
+          </div>
+          <strong>{lessonUsagePercent}%</strong>
+        </div>
+        <div className="meterTrack dashboardMeter">
+          <div className="meterFill" style={{ width: `${lessonUsagePercent}%` }} />
+        </div>
+      </section>
+
+      <section className="dashboardGrid">
+        <article className="panel dashboardPanel">
+          <div>
+            <p className="sectionLabel">Expiring Soon</p>
+            <h2>만료 임박</h2>
           </div>
 
-          <label>
-            이름
-            <input name="name" placeholder="예: 김민지" required />
-          </label>
-
-          <label>
-            연락처
-            <PhoneInput />
-          </label>
-
-          <div className="lessonInputs">
-            <label>
-              총 레슨
-              <input
-                name="totalLessons"
-                type="number"
-                min="0"
-                defaultValue="30"
-              />
-            </label>
-
-            <label>
-              잔여 레슨
-              <input
-                name="remainingLessons"
-                type="number"
-                min="0"
-                defaultValue="30"
-              />
-            </label>
-          </div>
-
-          <label>
-            메모
-            <textarea
-              name="memo"
-              rows="4"
-              placeholder="목표, 주의사항, 결제 메모 등을 적어둘 수 있습니다."
-            />
-          </label>
-
-          <button className="primaryButton" type="submit">
-            회원 추가
-          </button>
-        </form>
-
-        <section className="memberList">
-          <div className="listHeader">
-            <div>
-              <p className="sectionLabel">회원 목록</p>
-              <h2>{activeMembers.length}명</h2>
-              {expiredMembers.length > 0 ? (
-                <p className="muted">만료된 회원 {expiredMembers.length}명 숨김</p>
-              ) : null}
-            </div>
-          </div>
-
-          {members.length === 0 ? (
-            <div className="emptyState">
-              <h3>아직 등록된 회원이 없습니다.</h3>
-              <p>왼쪽 양식에서 첫 회원을 추가하면 여기에 표시됩니다.</p>
+          {expiringMembers.length === 0 ? (
+            <div className="lessonEmpty">
+              <h3>14일 내 만료 회원이 없습니다.</h3>
+              <p>유효기간이 가까운 회원이 생기면 여기에 표시됩니다.</p>
             </div>
           ) : (
-            <div className="cards">
-              {activeMembers.length === 0 ? (
-                <div className="emptyState">
-                  <h3>활성 회원이 없습니다.</h3>
-                  <p>만료된 회원은 아래에서 펼쳐볼 수 있습니다.</p>
-                </div>
-              ) : (
-                activeMembers.map((member) => (
-                  <MemberCard
-                    key={member.id}
-                    member={member}
-                    validityStatus={member.validityStatus}
-                  />
-                ))
-              )}
-
-              {expiredMembers.length > 0 ? (
-                <details className="expiredMembersPanel">
-                  <summary>
-                    만료된 회원들 보기
-                    <span>{expiredMembers.length}명</span>
-                  </summary>
-                  <div className="expiredMembersCards">
-                    {expiredMembers.map((member) => (
-                      <MemberCard
-                        key={member.id}
-                        member={member}
-                        validityStatus={member.validityStatus}
-                      />
-                    ))}
-                  </div>
-                </details>
-              ) : null}
+            <div className="dashboardRows">
+              {expiringMembers.slice(0, 5).map((member) => (
+                <Link
+                  className="dashboardRow"
+                  href={`/members/${member.id}`}
+                  key={member.id}
+                >
+                  <strong>{member.name}</strong>
+                  <span>{member.daysLeft <= 0 ? "오늘 만료" : `${member.daysLeft}일 남음`}</span>
+                </Link>
+              ))}
             </div>
           )}
-        </section>
+        </article>
+
+        <article className="panel dashboardPanel">
+          <div>
+            <p className="sectionLabel">Low Lessons</p>
+            <h2>잔여 레슨 부족</h2>
+          </div>
+
+          {lowLessonMembers.length === 0 ? (
+            <div className="lessonEmpty">
+              <h3>잔여 레슨 부족 회원이 없습니다.</h3>
+              <p>3회 이하로 남은 회원이 생기면 여기에 표시됩니다.</p>
+            </div>
+          ) : (
+            <div className="dashboardRows">
+              {lowLessonMembers.slice(0, 5).map((member) => (
+                <Link
+                  className="dashboardRow"
+                  href={`/members/${member.id}`}
+                  key={member.id}
+                >
+                  <strong>{member.name}</strong>
+                  <span>{member.remainingLessons}회 남음</span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </article>
       </section>
     </main>
   );

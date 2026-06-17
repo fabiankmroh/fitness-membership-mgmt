@@ -128,7 +128,7 @@ export default async function MemberDetailPage({ params, searchParams }) {
 
   return (
     <main className="shell narrowShell">
-      <Link className="backLink" href="/members">
+      <Link className="backLink" href="/members/manage">
         ← 회원 목록
       </Link>
 

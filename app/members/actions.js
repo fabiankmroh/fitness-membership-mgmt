@@ -154,6 +154,7 @@ export async function createMemberAction(formData) {
   queryTimer.end();
 
   revalidatePath("/members");
+  revalidatePath("/members/manage");
   actionTimer.end();
   redirect(`/members/${member.id}?memberCreated=1`);
 }
@@ -189,6 +190,7 @@ export async function updateMemberAction(formData) {
   }
 
   revalidatePath("/members");
+  revalidatePath("/members/manage");
   revalidatePath(`/members/${id}`);
   actionTimer.end();
 }
@@ -212,8 +214,9 @@ export async function deleteMemberAction(formData) {
   }
 
   revalidatePath("/members");
+  revalidatePath("/members/manage");
   actionTimer.end();
-  redirect("/members");
+  redirect("/members/manage");
 }
 
 export async function createLessonAction(previousState, formData) {
@@ -298,6 +301,7 @@ export async function createLessonAction(previousState, formData) {
     transactionTimer.end();
 
     revalidatePath("/members");
+    revalidatePath("/members/manage");
     revalidatePath(`/members/${memberId}`);
     refresh();
     actionTimer.end();
@@ -376,6 +380,7 @@ export async function updateLessonAction(previousState, formData) {
     transactionTimer.end();
 
     revalidatePath("/members");
+    revalidatePath("/members/manage");
     revalidatePath(`/members/${memberId}`);
     revalidatePath(`/members/${memberId}/lessons/${lessonId}`);
     actionTimer.end();
@@ -485,6 +490,7 @@ export async function deleteLessonAction(formData) {
     transactionTimer.end();
 
     revalidatePath("/members");
+    revalidatePath("/members/manage");
     revalidatePath(`/members/${memberId}`);
     actionTimer.end();
   } catch (error) {
@@ -547,6 +553,7 @@ export async function createLessonCreditTransactionAction(formData) {
   });
 
   revalidatePath("/members");
+  revalidatePath("/members/manage");
   revalidatePath(`/members/${memberId}`);
   refresh();
   redirect(`/members/${memberId}?creditAdded=${lessonCount}`);
@@ -645,6 +652,7 @@ export async function deleteLessonCreditTransactionAction(previousState, formDat
     transactionTimer.end();
 
     revalidatePath("/members");
+    revalidatePath("/members/manage");
     revalidatePath(`/members/${memberId}`);
     actionTimer.end();
   } catch (error) {

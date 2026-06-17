@@ -9,28 +9,35 @@ export default function MembersLoading() {
         </div>
       </section>
 
-      <section className="gridTwo">
-        <div className="panel formPanel skeletonPanel">
+      <section className="statsGrid">
+        <div className="statCard skeletonPanel">
+          <div className="skeletonLine medium" />
+          <div className="skeletonLine title" />
+        </div>
+        <div className="statCard skeletonPanel">
+          <div className="skeletonLine medium" />
+          <div className="skeletonLine title" />
+        </div>
+        <div className="statCard skeletonPanel">
+          <div className="skeletonLine medium" />
+          <div className="skeletonLine title" />
+        </div>
+      </section>
+
+      <section className="panel dashboardPanel skeletonPanel">
+        <div className="skeletonLine medium" />
+        <div className="skeletonBox input" />
+      </section>
+
+      <section className="dashboardGrid">
+        <div className="panel dashboardPanel skeletonPanel">
           <div className="skeletonLine medium" />
           <div className="skeletonBox input" />
-          <div className="skeletonBox input" />
-          <div className="lessonInputs">
-            <div className="skeletonBox input" />
-            <div className="skeletonBox input" />
-          </div>
-          <div className="skeletonBox textarea" />
         </div>
-
-        <section className="memberList">
-          <div className="listHeader">
-            <div className="skeletonLine medium" />
-          </div>
-          <div className="cards">
-            <div className="memberCard skeletonCard" />
-            <div className="memberCard skeletonCard" />
-            <div className="memberCard skeletonCard" />
-          </div>
-        </section>
+        <div className="panel dashboardPanel skeletonPanel">
+          <div className="skeletonLine medium" />
+          <div className="skeletonBox input" />
+        </div>
       </section>
     </main>
   );
