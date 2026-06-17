@@ -475,6 +475,54 @@ textarea:focus {
   color: #b84f3f;
 }
 
+.expiredMembersPanel {
+  display: grid;
+  gap: 12px;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+
+.expiredMembersPanel summary {
+  display: flex;
+  min-height: 48px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 16px;
+  color: var(--ink);
+  background: #fbf7f4;
+  font-weight: 850;
+  list-style: none;
+}
+
+.expiredMembersPanel summary::-webkit-details-marker {
+  display: none;
+}
+
+.expiredMembersPanel summary::before {
+  content: "+";
+  color: #b84f3f;
+  font-size: 1.2rem;
+  font-weight: 900;
+}
+
+.expiredMembersPanel[open] summary::before {
+  content: "-";
+}
+
+.expiredMembersPanel summary span {
+  color: var(--muted);
+  font-size: 0.94rem;
+}
+
+.expiredMembersCards {
+  display: grid;
+  gap: 14px;
+}
+
 .cardActions,
 .formActions {
   display: flex;

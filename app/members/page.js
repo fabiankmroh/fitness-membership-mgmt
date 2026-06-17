@@ -55,6 +55,58 @@ function getCreditValidityStatus(member, now) {
   };
 }
 
+function MemberCard({ member, validityStatus }) {
+  return (
+    <article className="memberCard" key={member.id}>
+      <div>
+        <Link className="memberName" href={`/members/${member.id}`}>
+          {member.name}
+        </Link>
+        <p className="muted">{formatPhoneNumber(member.phone) || "연락처 없음"}</p>
+      </div>
+
+      <div className="memberMeters">
+        <div className="lessonMeter">
+          <span>
+            {member.remainingLessons}회 남음 / {member.totalLessons}회
+          </span>
+          <div className="meterTrack">
+            <div
+              className="meterFill"
+              style={{
+                width:
+                  member.totalLessons === 0
+                    ? "0%"
+                    : `${Math.round(
+                        (member.remainingLessons / member.totalLessons) * 100
+                      )}%`
+              }}
+            />
+          </div>
+        </div>
+
+        <div className={`validityMeter ${validityStatus.state}`}>
+          <span>
+            {validityStatus.label}
+            <small>{validityStatus.detail}</small>
+          </span>
+        </div>
+      </div>
+
+      <div className="cardActions">
+        <Link className="secondaryButton" href={`/members/${member.id}`}>
+          편집
+        </Link>
+        <DeleteMemberForm
+          action={deleteMemberAction}
+          memberId={member.id}
+          memberName={member.name}
+        />
+      </div>
+    </article>
+  );
+}
+
 export default async function MembersPage() {
   const user = await requireUser();
   const now = new Date();
@@ -99,6 +151,16 @@ export default async function MembersPage() {
   });
   queryTimer.end();
   pageTimer.end();
+  const membersWithValidity = members.map((member) => ({
+    ...member,
+    validityStatus: getCreditValidityStatus(member, now)
+  }));
+  const activeMembers = membersWithValidity.filter(
+    (member) => member.validityStatus.state !== "expired"
+  );
+  const expiredMembers = membersWithValidity.filter(
+    (member) => member.validityStatus.state === "expired"
+  );
 
   return (
     <main className="shell">
@@ -177,7 +239,10 @@ export default async function MembersPage() {
           <div className="listHeader">
             <div>
               <p className="sectionLabel">회원 목록</p>
-              <h2>{members.length}명</h2>
+              <h2>{activeMembers.length}명</h2>
+              {expiredMembers.length > 0 ? (
+                <p className="muted">만료된 회원 {expiredMembers.length}명 숨김</p>
+              ) : null}
             </div>
           </div>
 
@@ -188,63 +253,38 @@ export default async function MembersPage() {
             </div>
           ) : (
             <div className="cards">
-              {members.map((member) => {
-                const validityStatus = getCreditValidityStatus(member, now);
+              {activeMembers.length === 0 ? (
+                <div className="emptyState">
+                  <h3>활성 회원이 없습니다.</h3>
+                  <p>만료된 회원은 아래에서 펼쳐볼 수 있습니다.</p>
+                </div>
+              ) : (
+                activeMembers.map((member) => (
+                  <MemberCard
+                    key={member.id}
+                    member={member}
+                    validityStatus={member.validityStatus}
+                  />
+                ))
+              )}
 
-                return (
-                  <article className="memberCard" key={member.id}>
-                    <div>
-                      <Link className="memberName" href={`/members/${member.id}`}>
-                        {member.name}
-                      </Link>
-                      <p className="muted">
-                        {formatPhoneNumber(member.phone) || "연락처 없음"}
-                      </p>
-                    </div>
-
-                    <div className="memberMeters">
-                      <div className="lessonMeter">
-                        <span>
-                          {member.remainingLessons}회 남음 / {member.totalLessons}회
-                        </span>
-                        <div className="meterTrack">
-                          <div
-                            className="meterFill"
-                            style={{
-                              width:
-                                member.totalLessons === 0
-                                  ? "0%"
-                                  : `${Math.round(
-                                      (member.remainingLessons /
-                                        member.totalLessons) *
-                                        100
-                                    )}%`
-                            }}
-                          />
-                        </div>
-                      </div>
-
-                      <div className={`validityMeter ${validityStatus.state}`}>
-                        <span>
-                          {validityStatus.label}
-                          <small>{validityStatus.detail}</small>
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="cardActions">
-                      <Link className="secondaryButton" href={`/members/${member.id}`}>
-                        편집
-                      </Link>
-                      <DeleteMemberForm
-                        action={deleteMemberAction}
-                        memberId={member.id}
-                        memberName={member.name}
+              {expiredMembers.length > 0 ? (
+                <details className="expiredMembersPanel">
+                  <summary>
+                    만료된 회원들 보기
+                    <span>{expiredMembers.length}명</span>
+                  </summary>
+                  <div className="expiredMembersCards">
+                    {expiredMembers.map((member) => (
+                      <MemberCard
+                        key={member.id}
+                        member={member}
+                        validityStatus={member.validityStatus}
                       />
-                    </div>
-                  </article>
-                );
-              })}
+                    ))}
+                  </div>
+                </details>
+              ) : null}
             </div>
           )}
         </section>
