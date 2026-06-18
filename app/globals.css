@@ -58,7 +58,7 @@ button {
   width: 154px;
   height: 92px;
   margin-bottom: 20px;
-  background: url("/brand/gymlord-logo-cropped.png") center / contain no-repeat;
+  background: url("/brand/gymlord-logo-cropped-transparent.png") center / contain no-repeat;
   content: "";
 }
 
@@ -85,7 +85,7 @@ button {
   width: 176px;
   height: 120px;
   margin: 0 auto 4px;
-  background: url("/brand/gymlord-logo-cropped.png") center / contain no-repeat;
+  background: url("/brand/gymlord-logo-cropped-transparent.png") center / contain no-repeat;
   content: "";
 }
 
