@@ -55,6 +55,7 @@ export default async function CalendarPage({ searchParams }) {
   const firstWeekday = getKstWeekdayIndex(year, month);
   const previousMonth = getAdjacentMonth(year, month, -1);
   const nextMonth = getAdjacentMonth(year, month, 1);
+  const todayParam = formatKstDateInput(now);
   const reservations = await prisma.lessonReservation.findMany({
     where: {
       startsAt: {
@@ -114,11 +115,14 @@ export default async function CalendarPage({ searchParams }) {
           >
             다음 달
           </Link>
+          <Link className="secondaryButton" href={`/calendar/day?date=${todayParam}`}>
+            오늘 일간 보기
+          </Link>
           <Link
             className="secondaryButton"
-            href={`/calendar/week?date=${formatKstDateInput(now)}`}
+            href={`/calendar/week?date=${todayParam}`}
           >
-            이번 주
+            이번 주 보기
           </Link>
         </div>
       </section>
@@ -151,7 +155,7 @@ export default async function CalendarPage({ searchParams }) {
             const dayReservations = reservationsByDay.get(day) || [];
             const dateParam = getDateParam(year, month, day);
             const visibleReservations =
-              dateParam === formatKstDateInput(now)
+              dateParam === todayParam
                 ? dayReservations
                     .filter((reservation) => reservation.startsAt >= now)
                     .slice(0, 2)
@@ -178,14 +182,11 @@ export default async function CalendarPage({ searchParams }) {
                         <span>{reservation.member.name}</span>
                       </Link>
                     ))}
-                    <div className="calendarMoreLinks">
-                      <Link href={`/calendar/day?date=${dateParam}`}>
-                        {hiddenReservationCount > 0
-                          ? `일간 보기 +${hiddenReservationCount}`
-                          : "일간 보기"}
-                      </Link>
-                      <Link href={`/calendar/week?date=${dateParam}`}>주간 보기</Link>
-                    </div>
+                    {hiddenReservationCount > 0 ? (
+                      <span className="calendarMoreCount">
+                        +{hiddenReservationCount}개 더 있음
+                      </span>
+                    ) : null}
                   </div>
                 )}
               </article>
