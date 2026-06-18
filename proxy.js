@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { updateSession } from "@/lib/supabase/proxy";
 
-const protectedPaths = ["/members", "/admin"];
+const protectedPaths = ["/members", "/admin", "/calendar"];
 
 export async function proxy(request) {
   const { response, user } = await updateSession(request);

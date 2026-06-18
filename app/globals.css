@@ -491,6 +491,92 @@ textarea:focus {
   font-weight: 800;
 }
 
+.calendarPanel {
+  display: grid;
+  gap: 16px;
+  padding: 22px;
+}
+
+.calendarHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.calendarHeader span {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.calendarWeekdays,
+.calendarGrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.calendarWeekdays span {
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 850;
+  text-align: center;
+}
+
+.calendarDay {
+  display: grid;
+  align-content: start;
+  min-height: 138px;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  background: #fbfdfb;
+}
+
+.calendarDayEmpty {
+  border-style: dashed;
+  background: rgba(255, 255, 255, 0.46);
+}
+
+.calendarNoReservation {
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 750;
+}
+
+.calendarReservations {
+  display: grid;
+  gap: 6px;
+}
+
+.calendarReservation {
+  display: grid;
+  gap: 2px;
+  border: 1px solid rgba(17, 122, 101, 0.18);
+  border-radius: 8px;
+  padding: 8px;
+  background: #eef7f3;
+  color: var(--accent-dark);
+  text-decoration: none;
+}
+
+.calendarReservation time,
+.calendarReservation span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendarReservation time {
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+.calendarReservation span {
+  font-weight: 850;
+}
+
 .memberCard {
   display: grid;
   grid-template-columns: minmax(160px, 1fr) minmax(220px, 300px) auto;
@@ -843,6 +929,13 @@ textarea:focus {
   padding: 22px;
 }
 
+.lessonReservationSection {
+  display: grid;
+  gap: 18px;
+  margin-top: 18px;
+  padding: 22px;
+}
+
 .lessonLogHeader,
 .signatureHeader {
   display: flex;
@@ -921,6 +1014,46 @@ textarea:focus {
 
 .lessonCreditRow span,
 .lessonCreditRow time {
+  color: var(--muted);
+  font-weight: 750;
+}
+
+.reservationForm {
+  display: grid;
+  grid-template-columns: minmax(210px, 260px) minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.reservationRows {
+  display: grid;
+  gap: 12px;
+}
+
+.reservationRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 260px) auto;
+  gap: 12px;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+  background: #fbfdfb;
+}
+
+.reservationRow form:first-child {
+  display: grid;
+  grid-template-columns: minmax(210px, 250px) minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.reservationSummary {
+  display: grid;
+  gap: 5px;
+}
+
+.reservationSummary span {
   color: var(--muted);
   font-weight: 750;
 }
@@ -1229,7 +1362,9 @@ textarea:focus {
   }
 
   .statsGrid,
-  .dashboardGrid {
+  .dashboardGrid,
+  .calendarWeekdays,
+  .calendarGrid {
     grid-template-columns: 1fr;
   }
 
@@ -1299,6 +1434,9 @@ textarea:focus {
   .customExerciseBox,
   .lessonCreditForm,
   .lessonCreditRow,
+  .reservationForm,
+  .reservationRow,
+  .reservationRow form:first-child,
   .selectedExerciseRow {
     grid-template-columns: 1fr;
   }

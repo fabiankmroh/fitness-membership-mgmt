@@ -2,35 +2,28 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   createLessonCreditTransactionAction,
+  createLessonReservationAction,
   deleteLessonCreditTransactionAction,
+  deleteLessonReservationAction,
   deleteMemberAction,
+  updateLessonReservationAction,
   updateMemberAction
 } from "../actions";
 import DeleteLessonCreditTransactionForm from "./DeleteLessonCreditTransactionForm";
 import DeleteMemberForm from "../DeleteMemberForm";
 import PhoneInput from "../PhoneInput";
 import { requireUser } from "@/lib/auth";
+import {
+  formatKstDate,
+  formatKstDateTime,
+  formatKstDateTimeInput
+} from "@/lib/kst";
 import { formatPhoneNumber } from "@/lib/phone";
 import { prisma } from "@/lib/prisma";
 import { startTimer } from "@/lib/timing";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
-
-function formatDate(date) {
-  return new Intl.DateTimeFormat("ko-KR", {
-    dateStyle: "medium",
-    timeStyle: "short",
-    timeZone: "Asia/Seoul"
-  }).format(date);
-}
-
-function formatDateOnly(date) {
-  return new Intl.DateTimeFormat("ko-KR", {
-    dateStyle: "medium",
-    timeZone: "Asia/Seoul"
-  }).format(date);
-}
 
 function getExerciseName(exercise) {
   return exercise.exerciseCatalog?.name || exercise.customName || "운동명 없음";
@@ -78,6 +71,18 @@ function getSuccessMessage(member, searchParams) {
     return "레슨 기록이 삭제되고 잔여 레슨이 1회 복구되었습니다.";
   }
 
+  if (searchParams?.reservationCreated === "1") {
+    return "레슨 예약이 추가되었습니다.";
+  }
+
+  if (searchParams?.reservationUpdated === "1") {
+    return "레슨 예약이 수정되었습니다.";
+  }
+
+  if (searchParams?.reservationDeleted === "1") {
+    return "레슨 예약이 삭제되었습니다.";
+  }
+
   return "";
 }
 
@@ -86,6 +91,7 @@ export default async function MemberDetailPage({ params, searchParams }) {
   const pageTimer = startTimer("/members/[id] page");
   const { id } = await params;
   const resolvedSearchParams = await searchParams;
+  const now = new Date();
   const queryTimer = startTimer("/members/[id] member.findUnique");
   const member = await prisma.member.findFirst({
     where: {
@@ -106,6 +112,16 @@ export default async function MemberDetailPage({ params, searchParams }) {
               exerciseCatalog: true
             }
           }
+        }
+      },
+      lessonReservations: {
+        where: {
+          startsAt: {
+            gte: now
+          }
+        },
+        orderBy: {
+          startsAt: "asc"
         }
       },
       lessonCreditTransactions: {
@@ -200,6 +216,90 @@ export default async function MemberDetailPage({ params, searchParams }) {
         </div>
       </form>
 
+      <section className="panel lessonReservationSection">
+        <div>
+          <p className="sectionLabel">Reservations</p>
+          <h2>향후 레슨 예약</h2>
+        </div>
+
+        <form action={createLessonReservationAction} className="reservationForm">
+          <input name="memberId" type="hidden" value={member.id} />
+          <label>
+            예약 시간
+            <input
+              min={formatKstDateTimeInput(now)}
+              name="startsAt"
+              required
+              type="datetime-local"
+            />
+          </label>
+          <label>
+            메모
+            <input name="memo" placeholder="예: 하체 집중, PT 50분" />
+          </label>
+          <button className="primaryButton" type="submit">
+            예약 추가
+          </button>
+        </form>
+
+        {member.lessonReservations.length === 0 ? (
+          <div className="lessonEmpty">
+            <h3>예정된 레슨 예약이 없습니다.</h3>
+            <p>향후 레슨 시간을 예약하면 홈과 캘린더에 표시됩니다.</p>
+          </div>
+        ) : (
+          <div className="reservationRows">
+            {member.lessonReservations.map((reservation) => (
+              <article className="reservationRow" key={reservation.id}>
+                <form action={updateLessonReservationAction}>
+                  <input name="memberId" type="hidden" value={member.id} />
+                  <input
+                    name="reservationId"
+                    type="hidden"
+                    value={reservation.id}
+                  />
+                  <label>
+                    예약 시간
+                    <input
+                      defaultValue={formatKstDateTimeInput(reservation.startsAt)}
+                      name="startsAt"
+                      required
+                      type="datetime-local"
+                    />
+                  </label>
+                  <label>
+                    메모
+                    <input
+                      defaultValue={reservation.memo}
+                      name="memo"
+                      placeholder="예약 메모"
+                    />
+                  </label>
+                  <button className="secondaryButton" type="submit">
+                    수정
+                  </button>
+                </form>
+                <div className="reservationSummary">
+                  <strong>{formatKstDateTime(reservation.startsAt)}</strong>
+                  <span>{reservation.memo || "메모 없음"}</span>
+                </div>
+                <form action={deleteLessonReservationAction}>
+                  <input name="memberId" type="hidden" value={member.id} />
+                  <input
+                    name="reservationId"
+                    type="hidden"
+                    value={reservation.id}
+                  />
+                  <button className="dangerButton" type="submit">
+                    삭제
+                  </button>
+                </form>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+
       <section className="panel lessonLogSection">
         <div className="lessonLogHeader">
           <div>
@@ -234,7 +334,7 @@ export default async function MemberDetailPage({ params, searchParams }) {
                 <strong>Lesson #{lesson.lessonNumber}</strong>
                 <span>{getLessonSummary(lesson)}</span>
                 <time dateTime={lesson.createdAt.toISOString()}>
-                  {formatDate(lesson.createdAt)}
+                  {formatKstDateTime(lesson.createdAt)}
                 </time>
               </Link>
             ))}
@@ -295,11 +395,11 @@ export default async function MemberDetailPage({ params, searchParams }) {
                 </div>
                 <span>
                   {transaction.expiresAt
-                    ? `유효기간 ${formatDateOnly(transaction.expiresAt)}`
+                    ? `유효기간 ${formatKstDate(transaction.expiresAt)}`
                     : "유효기간 없음"}
                 </span>
                 <time dateTime={transaction.createdAt.toISOString()}>
-                  {formatDate(transaction.createdAt)}
+                  {formatKstDateTime(transaction.createdAt)}
                 </time>
                 <DeleteLessonCreditTransactionForm
                   action={deleteLessonCreditTransactionAction}

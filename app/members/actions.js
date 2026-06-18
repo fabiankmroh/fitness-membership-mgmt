@@ -3,6 +3,7 @@
 import { refresh, revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
+import { parseKstDateTimeInput } from "@/lib/kst";
 import { getRequiredFormattedPhone } from "@/lib/phone";
 import { prisma } from "@/lib/prisma";
 import { startTimer } from "@/lib/timing";
@@ -670,4 +671,95 @@ export async function deleteLessonCreditTransactionAction(previousState, formDat
     ok: true,
     redirectTo: `/members/${memberId}?creditDeleted=1&refresh=${Date.now()}`
   };
+}
+
+function revalidateReservationPaths(memberId) {
+  revalidatePath("/members");
+  revalidatePath("/members/manage");
+  revalidatePath("/calendar");
+  revalidatePath(`/members/${memberId}`);
+}
+
+export async function createLessonReservationAction(formData) {
+  const user = await requireUser();
+  const memberId = getRequiredText(formData, "memberId");
+  const startsAt = parseKstDateTimeInput(formData.get("startsAt"));
+  const memo = getOptionalText(formData, "memo");
+
+  const member = await prisma.member.findFirst({
+    where: {
+      id: memberId,
+      ownerUserId: user.id
+    },
+    select: {
+      id: true
+    }
+  });
+
+  if (!member) {
+    throw new Error("Member not found.");
+  }
+
+  await prisma.lessonReservation.create({
+    data: {
+      memberId,
+      memo,
+      startsAt
+    }
+  });
+
+  revalidateReservationPaths(memberId);
+  redirect(`/members/${memberId}?reservationCreated=1`);
+}
+
+export async function updateLessonReservationAction(formData) {
+  const user = await requireUser();
+  const memberId = getRequiredText(formData, "memberId");
+  const reservationId = getRequiredText(formData, "reservationId");
+  const startsAt = parseKstDateTimeInput(formData.get("startsAt"));
+  const memo = getOptionalText(formData, "memo");
+
+  const result = await prisma.lessonReservation.updateMany({
+    where: {
+      id: reservationId,
+      memberId,
+      member: {
+        ownerUserId: user.id
+      }
+    },
+    data: {
+      memo,
+      startsAt
+    }
+  });
+
+  if (result.count !== 1) {
+    throw new Error("Lesson reservation not found.");
+  }
+
+  revalidateReservationPaths(memberId);
+  redirect(`/members/${memberId}?reservationUpdated=1`);
+}
+
+export async function deleteLessonReservationAction(formData) {
+  const user = await requireUser();
+  const memberId = getRequiredText(formData, "memberId");
+  const reservationId = getRequiredText(formData, "reservationId");
+
+  const result = await prisma.lessonReservation.deleteMany({
+    where: {
+      id: reservationId,
+      memberId,
+      member: {
+        ownerUserId: user.id
+      }
+    }
+  });
+
+  if (result.count !== 1) {
+    throw new Error("Lesson reservation not found.");
+  }
+
+  revalidateReservationPaths(memberId);
+  redirect(`/members/${memberId}?reservationDeleted=1`);
 }

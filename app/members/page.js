@@ -1,6 +1,7 @@
 import Link from "next/link";
 import LogoutForm from "./LogoutForm";
 import { requireUser } from "@/lib/auth";
+import { formatKstTime } from "@/lib/kst";
 import { prisma } from "@/lib/prisma";
 import { startTimer } from "@/lib/timing";
 
@@ -29,6 +30,7 @@ function getDaysUntil(date, now) {
 export default async function MembersHomePage() {
   const user = await requireUser();
   const now = new Date();
+  const nextFiveHours = new Date(now.getTime() + 5 * 60 * 60 * 1000);
   const appUser = await prisma.appUser.findUnique({
     where: {
       id: user.id
@@ -61,6 +63,28 @@ export default async function MembersHomePage() {
           expiresAt: true
         }
       }
+    }
+  });
+  const upcomingReservations = await prisma.lessonReservation.findMany({
+    where: {
+      startsAt: {
+        gte: now,
+        lte: nextFiveHours
+      },
+      member: {
+        ownerUserId: user.id
+      }
+    },
+    include: {
+      member: {
+        select: {
+          id: true,
+          name: true
+        }
+      }
+    },
+    orderBy: {
+      startsAt: "asc"
     }
   });
   queryTimer.end();
@@ -115,6 +139,9 @@ export default async function MembersHomePage() {
           </p>
         </div>
         <div className="headerActions">
+          <Link className="secondaryButton" href="/calendar">
+            캘린더
+          </Link>
           <Link className="primaryButton" href="/members/manage">
             회원 등록/목록
           </Link>
@@ -159,6 +186,33 @@ export default async function MembersHomePage() {
       </section>
 
       <section className="dashboardGrid">
+        <article className="panel dashboardPanel">
+          <div>
+            <p className="sectionLabel">Next 5 Hours</p>
+            <h2>곧 도착할 회원</h2>
+          </div>
+
+          {upcomingReservations.length === 0 ? (
+            <div className="lessonEmpty">
+              <h3>앞으로 5시간 내 예약이 없습니다.</h3>
+              <p>캘린더에 예약을 추가하면 여기에 표시됩니다.</p>
+            </div>
+          ) : (
+            <div className="dashboardRows">
+              {upcomingReservations.map((reservation) => (
+                <Link
+                  className="dashboardRow"
+                  href={`/members/${reservation.member.id}`}
+                  key={reservation.id}
+                >
+                  <strong>{reservation.member.name}</strong>
+                  <span>{formatKstTime(reservation.startsAt)}</span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </article>
+
         <article className="panel dashboardPanel">
           <div>
             <p className="sectionLabel">Expiring Soon</p>
