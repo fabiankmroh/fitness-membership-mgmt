@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import {
   formatKstTime,
+  formatKstDateInput,
   getKstDayOfMonth,
   getKstMonthDays,
   getKstMonthRange,
@@ -40,8 +41,13 @@ function getAdjacentMonth(year, month, offset) {
   return { month: nextMonth, year };
 }
 
+function getDateParam(year, month, day) {
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
 export default async function CalendarPage({ searchParams }) {
   const user = await requireUser();
+  const now = new Date();
   const resolvedSearchParams = await searchParams;
   const { month, year } = getCalendarMonth(resolvedSearchParams);
   const { start, end } = getKstMonthRange(year, month);
@@ -108,6 +114,12 @@ export default async function CalendarPage({ searchParams }) {
           >
             다음 달
           </Link>
+          <Link
+            className="secondaryButton"
+            href={`/calendar/week?date=${formatKstDateInput(now)}`}
+          >
+            이번 주
+          </Link>
         </div>
       </section>
 
@@ -137,6 +149,15 @@ export default async function CalendarPage({ searchParams }) {
           {Array.from({ length: daysInMonth }).map((_, index) => {
             const day = index + 1;
             const dayReservations = reservationsByDay.get(day) || [];
+            const dateParam = getDateParam(year, month, day);
+            const visibleReservations =
+              dateParam === formatKstDateInput(now)
+                ? dayReservations
+                    .filter((reservation) => reservation.startsAt >= now)
+                    .slice(0, 2)
+                : dayReservations.slice(0, 2);
+            const hiddenReservationCount =
+              dayReservations.length - visibleReservations.length;
 
             return (
               <article className="calendarDay" key={day}>
@@ -145,7 +166,7 @@ export default async function CalendarPage({ searchParams }) {
                   <span className="calendarNoReservation">예약 없음</span>
                 ) : (
                   <div className="calendarReservations">
-                    {dayReservations.map((reservation) => (
+                    {visibleReservations.map((reservation) => (
                       <Link
                         className="calendarReservation"
                         href={`/members/${reservation.member.id}`}
@@ -157,6 +178,14 @@ export default async function CalendarPage({ searchParams }) {
                         <span>{reservation.member.name}</span>
                       </Link>
                     ))}
+                    <div className="calendarMoreLinks">
+                      <Link href={`/calendar/day?date=${dateParam}`}>
+                        {hiddenReservationCount > 0
+                          ? `일간 보기 +${hiddenReservationCount}`
+                          : "일간 보기"}
+                      </Link>
+                      <Link href={`/calendar/week?date=${dateParam}`}>주간 보기</Link>
+                    </div>
                   </div>
                 )}
               </article>

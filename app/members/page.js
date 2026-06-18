@@ -127,6 +127,16 @@ export default async function MembersHomePage() {
     .sort((first, second) => first.daysLeft - second.daysLeft);
   const lessonUsagePercent =
     totalLessons === 0 ? 0 : Math.round((usedLessons / totalLessons) * 100);
+  const memberStats = [
+    { label: "활성", value: `${activeMembers.length}명` },
+    { label: "만료", value: `${expiredMembers.length}명` },
+    { label: "전체", value: `${totalMembers}명` }
+  ];
+  const lessonStats = [
+    { label: "잔여", value: `${remainingLessons}회` },
+    { label: "사용", value: `${usedLessons}회` },
+    { label: "전체", value: `${totalLessons}회` }
+  ];
 
   return (
     <main className="shell">
@@ -151,37 +161,6 @@ export default async function MembersHomePage() {
             </Link>
           ) : null}
           <LogoutForm email={user.email} />
-        </div>
-      </section>
-
-      <section className="statsGrid">
-        <article className="statCard">
-          <span>활성 회원</span>
-          <strong>{activeMembers.length}명</strong>
-          <small>전체 {totalMembers}명</small>
-        </article>
-        <article className="statCard">
-          <span>잔여 레슨</span>
-          <strong>{remainingLessons}회</strong>
-          <small>총 {totalLessons}회 중 {usedLessons}회 사용</small>
-        </article>
-        <article className="statCard">
-          <span>만료 회원</span>
-          <strong>{expiredMembers.length}명</strong>
-          <small>회원 목록 화면에서 펼쳐 확인</small>
-        </article>
-      </section>
-
-      <section className="panel dashboardPanel">
-        <div className="dashboardPanelHeader">
-          <div>
-            <p className="sectionLabel">Lesson Usage</p>
-            <h2>레슨 사용률</h2>
-          </div>
-          <strong>{lessonUsagePercent}%</strong>
-        </div>
-        <div className="meterTrack dashboardMeter">
-          <div className="meterFill" style={{ width: `${lessonUsagePercent}%` }} />
         </div>
       </section>
 
@@ -265,6 +244,44 @@ export default async function MembersHomePage() {
               ))}
             </div>
           )}
+        </article>
+      </section>
+
+      <section className="overviewGrid">
+        <article className="panel overviewCard">
+          <div>
+            <p className="sectionLabel">Members</p>
+            <h2>회원 현황</h2>
+          </div>
+          <div className="overviewStats">
+            {memberStats.map((stat) => (
+              <div key={stat.label}>
+                <span>{stat.label}</span>
+                <strong>{stat.value}</strong>
+              </div>
+            ))}
+          </div>
+        </article>
+
+        <article className="panel overviewCard">
+          <div className="dashboardPanelHeader">
+            <div>
+              <p className="sectionLabel">Lessons</p>
+              <h2>레슨 현황</h2>
+            </div>
+            <strong>{lessonUsagePercent}%</strong>
+          </div>
+          <div className="overviewStats">
+            {lessonStats.map((stat) => (
+              <div key={stat.label}>
+                <span>{stat.label}</span>
+                <strong>{stat.value}</strong>
+              </div>
+            ))}
+          </div>
+          <div className="meterTrack dashboardMeter">
+            <div className="meterFill" style={{ width: `${lessonUsagePercent}%` }} />
+          </div>
         </article>
       </section>
     </main>

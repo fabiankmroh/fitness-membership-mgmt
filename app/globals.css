@@ -444,9 +444,47 @@ textarea:focus {
 
 .dashboardGrid {
   display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.overviewGrid {
+  display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
   margin-top: 18px;
+}
+
+.overviewCard {
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+}
+
+.overviewStats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.overviewStats div {
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--surface-muted);
+}
+
+.overviewStats span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 850;
+}
+
+.overviewStats strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 1.35rem;
 }
 
 .dashboardPanel {
@@ -578,6 +616,39 @@ textarea:focus {
 
 .calendarReservation span {
   font-weight: 850;
+}
+
+.calendarMoreLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.calendarMoreLinks a {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 850;
+  text-decoration: none;
+}
+
+.weekGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.weekDay {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  padding: 18px;
+}
+
+.weekDayHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .memberCard {
@@ -1372,13 +1443,19 @@ textarea:focus {
 
   .statsGrid,
   .dashboardGrid,
+  .overviewGrid,
   .calendarWeekdays,
   .calendarGrid {
     grid-template-columns: 1fr;
   }
 
+  .overviewStats {
+    grid-template-columns: 1fr;
+  }
+
   .dashboardPanelHeader,
-  .dashboardRow {
+  .dashboardRow,
+  .weekDayHeader {
     align-items: flex-start;
     flex-direction: column;
   }
