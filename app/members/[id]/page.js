@@ -16,7 +16,8 @@ import { requireUser } from "@/lib/auth";
 import {
   formatKstDate,
   formatKstDateTime,
-  formatKstDateTimeInput
+  formatKstDateInput,
+  formatKstTimeInput
 } from "@/lib/kst";
 import { formatPhoneNumber } from "@/lib/phone";
 import { prisma } from "@/lib/prisma";
@@ -86,6 +87,37 @@ function getSuccessMessage(member, searchParams) {
   return "";
 }
 
+function getErrorMessage(searchParams) {
+  if (searchParams?.creditError === "past") {
+    return "수업권 유효기간은 오늘보다 과거로 설정할 수 없습니다.";
+  }
+
+  if (searchParams?.reservationError === "past") {
+    return "예약 시간은 현재보다 과거로 설정할 수 없습니다.";
+  }
+
+  if (searchParams?.reservationError === "invalid") {
+    return "예약 날짜와 시간을 다시 선택해 주세요.";
+  }
+
+  return "";
+}
+
+function getReservationTimeOptions() {
+  return Array.from({ length: 48 }).map((_, index) => {
+    const hour = Math.floor(index / 2);
+    const minute = index % 2 === 0 ? "00" : "30";
+    const value = `${String(hour).padStart(2, "0")}:${minute}`;
+    const period = hour < 12 ? "AM" : "PM";
+    const displayHour = hour % 12 || 12;
+
+    return {
+      label: `${period} ${displayHour}:${minute}`,
+      value
+    };
+  });
+}
+
 export default async function MemberDetailPage({ params, searchParams }) {
   const user = await requireUser();
   const pageTimer = startTimer("/members/[id] page");
@@ -140,6 +172,9 @@ export default async function MemberDetailPage({ params, searchParams }) {
   }
 
   const successMessage = getSuccessMessage(member, resolvedSearchParams);
+  const errorMessage = getErrorMessage(resolvedSearchParams);
+  const todayKst = formatKstDateInput(now);
+  const reservationTimeOptions = getReservationTimeOptions();
   pageTimer.end();
 
   return (
@@ -151,6 +186,12 @@ export default async function MemberDetailPage({ params, searchParams }) {
       {successMessage ? (
         <div className="successNotice" role="status">
           {successMessage}
+        </div>
+      ) : null}
+
+      {errorMessage ? (
+        <div className="errorNotice" role="alert">
+          {errorMessage}
         </div>
       ) : null}
 
@@ -226,12 +267,19 @@ export default async function MemberDetailPage({ params, searchParams }) {
           <input name="memberId" type="hidden" value={member.id} />
           <label>
             예약 시간
-            <input
-              min={formatKstDateTimeInput(now)}
-              name="startsAt"
-              required
-              type="datetime-local"
-            />
+            <div className="reservationDateTimeInputs">
+              <input min={todayKst} name="reservationDate" required type="date" />
+              <select name="reservationTime" required defaultValue="">
+                <option disabled value="">
+                  시간 선택
+                </option>
+                {reservationTimeOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </label>
           <label>
             메모
@@ -260,12 +308,26 @@ export default async function MemberDetailPage({ params, searchParams }) {
                   />
                   <label>
                     예약 시간
-                    <input
-                      defaultValue={formatKstDateTimeInput(reservation.startsAt)}
-                      name="startsAt"
-                      required
-                      type="datetime-local"
-                    />
+                    <div className="reservationDateTimeInputs">
+                      <input
+                        defaultValue={formatKstDateInput(reservation.startsAt)}
+                        min={todayKst}
+                        name="reservationDate"
+                        required
+                        type="date"
+                      />
+                      <select
+                        defaultValue={formatKstTimeInput(reservation.startsAt)}
+                        name="reservationTime"
+                        required
+                      >
+                        {reservationTimeOptions.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </label>
                   <label>
                     메모
@@ -372,7 +434,7 @@ export default async function MemberDetailPage({ params, searchParams }) {
 
           <label>
             유효기간
-            <input name="expiresAt" type="date" />
+            <input min={todayKst} name="expiresAt" type="date" />
           </label>
 
           <button className="primaryButton" type="submit">
