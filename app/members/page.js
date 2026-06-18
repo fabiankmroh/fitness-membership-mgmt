@@ -1,7 +1,7 @@
 import Link from "next/link";
 import LogoutForm from "./LogoutForm";
 import { requireUser } from "@/lib/auth";
-import { formatKstTime } from "@/lib/kst";
+import { formatKstTimeRange } from "@/lib/kst";
 import { prisma } from "@/lib/prisma";
 import { startTimer } from "@/lib/timing";
 
@@ -185,7 +185,7 @@ export default async function MembersHomePage() {
                   key={reservation.id}
                 >
                   <strong>{reservation.member.name}</strong>
-                  <span>{formatKstTime(reservation.startsAt)}</span>
+                  <span>{formatKstTimeRange(reservation.startsAt, reservation.endsAt)}</span>
                 </Link>
               ))}
             </div>

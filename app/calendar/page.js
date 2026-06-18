@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import {
-  formatKstTime,
   formatKstDateInput,
+  formatKstTimeRange,
   getKstDayOfMonth,
   getKstMonthDays,
   getKstMonthRange,
@@ -102,28 +102,36 @@ export default async function CalendarPage({ searchParams }) {
             모든 예약 시간은 한국 시간 기준으로 표시됩니다.
           </p>
         </div>
-        <div className="headerActions">
-          <Link
-            className="secondaryButton"
-            href={`/calendar?year=${previousMonth.year}&month=${previousMonth.month}`}
-          >
-            이전 달
-          </Link>
-          <Link
-            className="secondaryButton"
-            href={`/calendar?year=${nextMonth.year}&month=${nextMonth.month}`}
-          >
-            다음 달
-          </Link>
-          <Link className="secondaryButton" href={`/calendar/day?date=${todayParam}`}>
-            오늘 일간 보기
-          </Link>
-          <Link
-            className="secondaryButton"
-            href={`/calendar/week?date=${todayParam}`}
-          >
-            이번 주 보기
-          </Link>
+        <div className="calendarToolbar">
+          <div className="calendarPeriodNav" aria-label="월 이동">
+            <Link
+              className="calendarNavButton"
+              href={`/calendar?year=${previousMonth.year}&month=${previousMonth.month}`}
+            >
+              ‹ 이전 달
+            </Link>
+            <Link
+              className="calendarNavButton"
+              href={`/calendar?year=${nextMonth.year}&month=${nextMonth.month}`}
+            >
+              다음 달 ›
+            </Link>
+          </div>
+          <nav className="calendarViewSwitch" aria-label="캘린더 보기">
+            <Link
+              aria-current="page"
+              className="calendarViewLink calendarViewLinkActive"
+              href={`/calendar?year=${year}&month=${month}`}
+            >
+              월
+            </Link>
+            <Link className="calendarViewLink" href={`/calendar/week?date=${todayParam}`}>
+              주
+            </Link>
+            <Link className="calendarViewLink" href={`/calendar/day?date=${todayParam}`}>
+              일
+            </Link>
+          </nav>
         </div>
       </section>
 
@@ -177,7 +185,7 @@ export default async function CalendarPage({ searchParams }) {
                         key={reservation.id}
                       >
                         <time dateTime={reservation.startsAt.toISOString()}>
-                          {formatKstTime(reservation.startsAt)}
+                          {formatKstTimeRange(reservation.startsAt, reservation.endsAt)}
                         </time>
                         <span>{reservation.member.name}</span>
                       </Link>

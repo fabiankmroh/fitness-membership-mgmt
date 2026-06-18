@@ -17,6 +17,7 @@ import {
   formatKstDate,
   formatKstDateTime,
   formatKstDateInput,
+  formatKstTimeRange,
   formatKstTimeInput
 } from "@/lib/kst";
 import { formatPhoneNumber } from "@/lib/phone";
@@ -98,6 +99,10 @@ function getErrorMessage(searchParams) {
 
   if (searchParams?.reservationError === "invalid") {
     return "예약 날짜와 시간을 다시 선택해 주세요.";
+  }
+
+  if (searchParams?.reservationError === "range") {
+    return "마무리 시간은 시작 시간보다 늦어야 합니다.";
   }
 
   return "";
@@ -266,12 +271,29 @@ export default async function MemberDetailPage({ params, searchParams }) {
         <form action={createLessonReservationAction} className="reservationForm">
           <input name="memberId" type="hidden" value={member.id} />
           <label>
-            예약 시간
+            예약 날짜
             <div className="reservationDateTimeInputs">
               <input min={todayKst} name="reservationDate" required type="date" />
-              <select name="reservationTime" required defaultValue="">
+            </div>
+          </label>
+          <label>
+            시작 시간
+            <select name="reservationStartTime" required defaultValue="">
+              <option disabled value="">
+                시작 선택
+              </option>
+              {reservationTimeOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            마무리 시간
+            <select name="reservationEndTime" required defaultValue="">
                 <option disabled value="">
-                  시간 선택
+                  마무리 선택
                 </option>
                 {reservationTimeOptions.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -279,7 +301,6 @@ export default async function MemberDetailPage({ params, searchParams }) {
                   </option>
                 ))}
               </select>
-            </div>
           </label>
           <label>
             메모
@@ -307,7 +328,7 @@ export default async function MemberDetailPage({ params, searchParams }) {
                     value={reservation.id}
                   />
                   <label>
-                    예약 시간
+                    예약 날짜
                     <div className="reservationDateTimeInputs">
                       <input
                         defaultValue={formatKstDateInput(reservation.startsAt)}
@@ -316,18 +337,35 @@ export default async function MemberDetailPage({ params, searchParams }) {
                         required
                         type="date"
                       />
-                      <select
-                        defaultValue={formatKstTimeInput(reservation.startsAt)}
-                        name="reservationTime"
-                        required
-                      >
-                        {reservationTimeOptions.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
                     </div>
+                  </label>
+                  <label>
+                    시작 시간
+                    <select
+                      defaultValue={formatKstTimeInput(reservation.startsAt)}
+                      name="reservationStartTime"
+                      required
+                    >
+                      {reservationTimeOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    마무리 시간
+                    <select
+                      defaultValue={formatKstTimeInput(reservation.endsAt)}
+                      name="reservationEndTime"
+                      required
+                    >
+                      {reservationTimeOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
                   </label>
                   <label>
                     메모
@@ -343,6 +381,9 @@ export default async function MemberDetailPage({ params, searchParams }) {
                 </form>
                 <div className="reservationSummary">
                   <strong>{formatKstDateTime(reservation.startsAt)}</strong>
+                  <span>
+                    {formatKstTimeRange(reservation.startsAt, reservation.endsAt)}
+                  </span>
                   <span>{reservation.memo || "메모 없음"}</span>
                 </div>
                 <form action={deleteLessonReservationAction}>

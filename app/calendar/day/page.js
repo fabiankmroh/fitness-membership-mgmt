@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import {
   formatKstDate,
-  formatKstTime,
+  formatKstTimeRange,
   getKstDateRange,
   getKstYearMonth,
   formatKstDateInput
@@ -10,6 +10,8 @@ import {
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 function getDate(searchParams) {
   const requestedDate = String(searchParams?.date || "");
@@ -27,6 +29,8 @@ export default async function CalendarDayPage({ searchParams }) {
   const date = getDate(resolvedSearchParams);
   const { start, end } = getKstDateRange(date);
   const monthLink = getKstYearMonth(start);
+  const previousDay = formatKstDateInput(new Date(start.getTime() - DAY_MS));
+  const nextDay = formatKstDateInput(new Date(start.getTime() + DAY_MS));
   const reservations = await prisma.lessonReservation.findMany({
     where: {
       startsAt: {
@@ -65,10 +69,33 @@ export default async function CalendarDayPage({ searchParams }) {
           <h1>{formatKstDate(start, "full")}</h1>
           <p className="subtitle">이 날짜의 모든 예약을 한국 시간 기준으로 봅니다.</p>
         </div>
-        <div className="headerActions">
-          <Link className="secondaryButton" href={`/calendar/week?date=${date}`}>
-            주간 보기
-          </Link>
+        <div className="calendarToolbar">
+          <div className="calendarPeriodNav" aria-label="일 이동">
+            <Link className="calendarNavButton" href={`/calendar/day?date=${previousDay}`}>
+              ‹ 이전 일
+            </Link>
+            <Link className="calendarNavButton" href={`/calendar/day?date=${nextDay}`}>
+              다음 일 ›
+            </Link>
+          </div>
+          <nav className="calendarViewSwitch" aria-label="캘린더 보기">
+            <Link
+              className="calendarViewLink"
+              href={`/calendar?year=${monthLink.year}&month=${monthLink.month}`}
+            >
+              월
+            </Link>
+            <Link className="calendarViewLink" href={`/calendar/week?date=${date}`}>
+              주
+            </Link>
+            <Link
+              aria-current="page"
+              className="calendarViewLink calendarViewLinkActive"
+              href={`/calendar/day?date=${date}`}
+            >
+              일
+            </Link>
+          </nav>
         </div>
       </section>
 
@@ -88,7 +115,7 @@ export default async function CalendarDayPage({ searchParams }) {
               >
                 <strong>{reservation.member.name}</strong>
                 <span>
-                  {formatKstTime(reservation.startsAt)}
+                  {formatKstTimeRange(reservation.startsAt, reservation.endsAt)}
                   {reservation.memo ? ` · ${reservation.memo}` : ""}
                 </span>
               </Link>

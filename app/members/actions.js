@@ -38,13 +38,18 @@ function getOptionalKstEndOfDayDate(formData, fieldName) {
   return date;
 }
 
-function getFutureReservationStart(formData, memberId) {
+function getFutureReservationRange(formData, memberId) {
+  let endsAt;
   let startsAt;
 
   try {
     startsAt = parseKstDateTimeParts(
       formData.get("reservationDate"),
-      formData.get("reservationTime")
+      formData.get("reservationStartTime")
+    );
+    endsAt = parseKstDateTimeParts(
+      formData.get("reservationDate"),
+      formData.get("reservationEndTime")
     );
   } catch {
     redirect(`/members/${memberId}?reservationError=invalid`);
@@ -54,7 +59,11 @@ function getFutureReservationStart(formData, memberId) {
     redirect(`/members/${memberId}?reservationError=past`);
   }
 
-  return startsAt;
+  if (endsAt <= startsAt) {
+    redirect(`/members/${memberId}?reservationError=range`);
+  }
+
+  return { endsAt, startsAt };
 }
 
 function getLessonNumber(formData, fieldName, fallback = 0) {
@@ -706,7 +715,7 @@ function revalidateReservationPaths(memberId) {
 export async function createLessonReservationAction(formData) {
   const user = await requireUser();
   const memberId = getRequiredText(formData, "memberId");
-  const startsAt = getFutureReservationStart(formData, memberId);
+  const { endsAt, startsAt } = getFutureReservationRange(formData, memberId);
   const memo = getOptionalText(formData, "memo");
 
   const member = await prisma.member.findFirst({
@@ -725,6 +734,7 @@ export async function createLessonReservationAction(formData) {
 
   await prisma.lessonReservation.create({
     data: {
+      endsAt,
       memberId,
       memo,
       startsAt
@@ -739,7 +749,7 @@ export async function updateLessonReservationAction(formData) {
   const user = await requireUser();
   const memberId = getRequiredText(formData, "memberId");
   const reservationId = getRequiredText(formData, "reservationId");
-  const startsAt = getFutureReservationStart(formData, memberId);
+  const { endsAt, startsAt } = getFutureReservationRange(formData, memberId);
   const memo = getOptionalText(formData, "memo");
 
   const result = await prisma.lessonReservation.updateMany({
@@ -751,6 +761,7 @@ export async function updateLessonReservationAction(formData) {
       }
     },
     data: {
+      endsAt,
       memo,
       startsAt
     }

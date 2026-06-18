@@ -3,7 +3,7 @@ import { requireUser } from "@/lib/auth";
 import {
   formatKstDate,
   formatKstDateInput,
-  formatKstTime,
+  formatKstTimeRange,
   formatKstTimeInput,
   getKstDayOfMonth,
   getKstWeekRange,
@@ -14,6 +14,7 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+const SLOT_MS = 30 * 60 * 1000;
 const SLOT_COUNT = 48;
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -33,6 +34,15 @@ function getSlotIndex(date) {
   return hour * 2 + (minute >= 30 ? 1 : 0);
 }
 
+function getSlotSpan(reservation) {
+  return Math.max(
+    1,
+    Math.ceil(
+      (reservation.endsAt.getTime() - reservation.startsAt.getTime()) / SLOT_MS
+    )
+  );
+}
+
 function getHourLabel(hour) {
   const period = hour < 12 ? "AM" : "PM";
   const displayHour = hour % 12 || 12;
@@ -42,7 +52,6 @@ function getHourLabel(hour) {
 
 export default async function CalendarWeekPage({ searchParams }) {
   const user = await requireUser();
-  const todayParam = formatKstDateInput(new Date());
   const resolvedSearchParams = await searchParams;
   const date = getDate(resolvedSearchParams);
   const { start, end } = getKstWeekRange(date);
@@ -97,10 +106,12 @@ export default async function CalendarWeekPage({ searchParams }) {
     const group = reservationGroups.get(groupKey) || {
       dayIndex,
       reservations: [],
+      slotSpan: 1,
       slotIndex
     };
 
     group.reservations.push(reservation);
+    group.slotSpan = Math.max(group.slotSpan, getSlotSpan(reservation));
     reservationGroups.set(groupKey, group);
   });
   const hourSlots = Array.from({ length: 24 }).map((_, index) => index);
@@ -126,22 +137,33 @@ export default async function CalendarWeekPage({ searchParams }) {
             {formatKstDate(start)}부터 {formatKstDate(new Date(end.getTime() - DAY_MS))}까지의 전체 예약입니다.
           </p>
         </div>
-        <div className="headerActions">
-          <Link
-            className="secondaryButton"
-            href={`/calendar?year=${monthLink.year}&month=${monthLink.month}`}
-          >
-            월간 보기
-          </Link>
-          <Link className="secondaryButton" href={`/calendar/day?date=${todayParam}`}>
-            오늘 일간 보기
-          </Link>
-          <Link className="secondaryButton" href={`/calendar/week?date=${previousWeek}`}>
-            이전 주
-          </Link>
-          <Link className="secondaryButton" href={`/calendar/week?date=${nextWeek}`}>
-            다음 주
-          </Link>
+        <div className="calendarToolbar">
+          <div className="calendarPeriodNav" aria-label="주 이동">
+            <Link className="calendarNavButton" href={`/calendar/week?date=${previousWeek}`}>
+              ‹ 이전 주
+            </Link>
+            <Link className="calendarNavButton" href={`/calendar/week?date=${nextWeek}`}>
+              다음 주 ›
+            </Link>
+          </div>
+          <nav className="calendarViewSwitch" aria-label="캘린더 보기">
+            <Link
+              className="calendarViewLink"
+              href={`/calendar?year=${monthLink.year}&month=${monthLink.month}`}
+            >
+              월
+            </Link>
+            <Link
+              aria-current="page"
+              className="calendarViewLink calendarViewLinkActive"
+              href={`/calendar/week?date=${date}`}
+            >
+              주
+            </Link>
+            <Link className="calendarViewLink" href={`/calendar/day?date=${date}`}>
+              일
+            </Link>
+          </nav>
         </div>
       </section>
 
@@ -188,7 +210,7 @@ export default async function CalendarWeekPage({ searchParams }) {
               key={`${group.dayIndex}-${group.slotIndex}`}
               style={{
                 gridColumn: group.dayIndex + 2,
-                gridRow: `${group.slotIndex + 2} / span 2`
+                gridRow: `${group.slotIndex + 2} / span ${group.slotSpan}`
               }}
             >
               {group.reservations.map((reservation) => (
@@ -199,7 +221,7 @@ export default async function CalendarWeekPage({ searchParams }) {
                 >
                   <strong>{reservation.member.name}</strong>
                   <span>
-                    {formatKstTime(reservation.startsAt)}
+                    {formatKstTimeRange(reservation.startsAt, reservation.endsAt)}
                     {reservation.memo ? ` · ${reservation.memo}` : ""}
                   </span>
                 </Link>
