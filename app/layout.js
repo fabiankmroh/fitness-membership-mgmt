@@ -1,8 +1,8 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "Fitness Membership Management",
-  description: "Manage members and remaining lesson counts."
+  title: "GYMLORD",
+  description: "GYMLORD fitness membership management."
 };
 
 export default function RootLayout({ children }) {

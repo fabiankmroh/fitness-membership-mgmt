@@ -1,16 +1,18 @@
 :root {
   color-scheme: light;
-  --background: #f5f7f4;
+  --background: #f6f6f3;
   --surface: #ffffff;
-  --surface-muted: #edf2ee;
-  --ink: #17211b;
-  --muted: #68756d;
-  --line: #dce4de;
-  --accent: #117a65;
-  --accent-dark: #0d5c4c;
-  --danger: #b3261e;
-  --danger-soft: #fff0ed;
-  --shadow: 0 18px 45px rgba(23, 33, 27, 0.09);
+  --surface-muted: #eeeeec;
+  --ink: #1d1d1b;
+  --muted: #666660;
+  --line: #d8d8d2;
+  --accent: #1d1d1b;
+  --accent-dark: #000000;
+  --danger: #1d1d1b;
+  --danger-soft: #f1f1ee;
+  --shadow: 0 18px 45px rgba(0, 0, 0, 0.08);
+  --brand-font: Impact, Haettenschweiler, "Arial Black", "Arial Narrow", sans-serif;
+  --ui-font: "Arial Black", Arial, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
 }
 
 * {
@@ -26,11 +28,8 @@ body {
   min-height: 100%;
   margin: 0;
   color: var(--ink);
-  background:
-    linear-gradient(180deg, rgba(17, 122, 101, 0.08), transparent 300px),
-    var(--background);
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--background);
+  font-family: var(--ui-font);
 }
 
 a {
@@ -54,6 +53,15 @@ button {
   padding: 42px 0 64px;
 }
 
+.shell::before {
+  display: block;
+  width: 154px;
+  height: 92px;
+  margin-bottom: 20px;
+  background: url("/brand/gymlord-logo-cropped.png") center / contain no-repeat;
+  content: "";
+}
+
 .authShell {
   display: grid;
   min-height: 100vh;
@@ -70,6 +78,15 @@ button {
   padding: 28px;
   background: rgba(255, 255, 255, 0.94);
   box-shadow: var(--shadow);
+}
+
+.authPanel::before {
+  display: block;
+  width: 176px;
+  height: 120px;
+  margin: 0 auto 4px;
+  background: url("/brand/gymlord-logo-cropped.png") center / contain no-repeat;
+  content: "";
 }
 
 .loginForm {
@@ -275,7 +292,7 @@ h2 {
 label {
   display: grid;
   gap: 8px;
-  color: #35443b;
+  color: #333333;
   font-size: 0.95rem;
   font-weight: 700;
 }
@@ -289,7 +306,7 @@ textarea {
   border-radius: 8px;
   padding: 13px 14px;
   color: var(--ink);
-  background: #fbfdfb;
+  background: #f9f9f7;
   outline: none;
 }
 
@@ -302,7 +319,7 @@ input:focus,
 select:focus,
 textarea:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 4px rgba(17, 122, 101, 0.13);
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.13);
 }
 
 .lessonInputs {
@@ -359,7 +376,7 @@ textarea:focus {
   overflow: hidden;
   position: relative;
   border-radius: 8px;
-  background: #e6eee8;
+  background: #e8e8e4;
 }
 
 .skeletonLine::after,
@@ -591,7 +608,7 @@ textarea:focus {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 0 14px;
-  background: #fbfdfb;
+  background: #f9f9f7;
   text-decoration: none;
 }
 
@@ -640,7 +657,7 @@ textarea:focus {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 10px;
-  background: #fbfdfb;
+  background: #f9f9f7;
 }
 
 .calendarDayEmpty {
@@ -662,10 +679,10 @@ textarea:focus {
 .calendarReservation {
   display: grid;
   gap: 2px;
-  border: 1px solid rgba(17, 122, 101, 0.18);
+  border: 1px solid rgba(0, 0, 0, 0.18);
   border-radius: 8px;
   padding: 8px;
-  background: #eef7f3;
+  background: #f1f1ee;
   color: var(--accent-dark);
   text-decoration: none;
 }
@@ -716,7 +733,7 @@ textarea:focus {
   grid-row: 1;
   border-right: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
-  background: #f8fbf8;
+  background: #f5f5f2;
 }
 
 .weekColumnHeader {
@@ -730,7 +747,7 @@ textarea:focus {
   border-right: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
   padding: 8px 10px;
-  background: #f8fbf8;
+  background: #f5f5f2;
   color: var(--ink);
   text-align: center;
   text-decoration: none;
@@ -783,11 +800,11 @@ textarea:focus {
   min-width: 0;
   overflow: hidden;
   margin: 3px 5px;
-  border: 1px solid rgba(17, 122, 101, 0.22);
+  border: 1px solid rgba(0, 0, 0, 0.22);
   border-radius: 8px;
   padding: 4px;
-  background: #e8f4ef;
-  box-shadow: 0 8px 18px rgba(17, 122, 101, 0.08);
+  background: #eeeeea;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
 }
 
 .weekEventItem {
@@ -873,7 +890,7 @@ textarea:focus {
 .validityMeter {
   display: grid;
   gap: 8px;
-  color: #7c5b14;
+  color: #555555;
   font-weight: 800;
 }
 
@@ -890,7 +907,7 @@ textarea:focus {
 }
 
 .validityMeter.expired {
-  color: #b84f3f;
+  color: #333333;
 }
 
 .expiredMembersPanel {
@@ -911,7 +928,7 @@ textarea:focus {
   border-radius: 8px;
   padding: 0 16px;
   color: var(--ink);
-  background: #fbf7f4;
+  background: #f2f2ef;
   font-weight: 850;
   list-style: none;
 }
@@ -922,7 +939,7 @@ textarea:focus {
 
 .expiredMembersPanel summary::before {
   content: "+";
-  color: #b84f3f;
+  color: #333333;
   font-size: 1.2rem;
   font-weight: 900;
 }
@@ -997,7 +1014,7 @@ textarea:focus {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 14px;
-  background: #fbfdfb;
+  background: #f9f9f7;
 }
 
 .transferMemberStats {
@@ -1032,7 +1049,7 @@ textarea:focus {
   border-radius: 8px;
   padding: 0 12px;
   color: var(--ink);
-  background: #fbfdfb;
+  background: #f9f9f7;
   font: inherit;
   font-weight: 800;
 }
@@ -1098,7 +1115,7 @@ textarea:focus {
 
 .successNotice {
   margin-bottom: 18px;
-  border: 1px solid rgba(17, 122, 101, 0.24);
+  border: 1px solid rgba(0, 0, 0, 0.24);
   border-radius: 8px;
   padding: 14px 16px;
   color: var(--accent-dark);
@@ -1108,7 +1125,7 @@ textarea:focus {
 }
 
 .errorNotice {
-  border: 1px solid #f1b8b0;
+  border: 1px solid #cfcfca;
   border-radius: 8px;
   padding: 14px 16px;
   color: var(--danger);
@@ -1206,13 +1223,13 @@ textarea:focus {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 14px;
-  background: #fbfdfb;
+  background: #f9f9f7;
   text-decoration: none;
 }
 
 .lessonRow:hover {
-  border-color: rgba(17, 122, 101, 0.4);
-  background: #f6fbf8;
+  border-color: rgba(0, 0, 0, 0.4);
+  background: #f2f2ef;
 }
 
 .lessonRow span {
@@ -1249,7 +1266,7 @@ textarea:focus {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 14px;
-  background: #fbfdfb;
+  background: #f9f9f7;
 }
 
 .lessonCreditRow > div {
@@ -1289,7 +1306,7 @@ textarea:focus {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 14px;
-  background: #fbfdfb;
+  background: #f9f9f7;
 }
 
 .reservationRow form:first-child {
@@ -1317,7 +1334,7 @@ textarea:focus {
 .lessonEmpty {
   border: 1px dashed var(--line);
   border-radius: 8px;
-  background: #fbfdfb;
+  background: #f9f9f7;
 }
 
 .lessonEmpty p,
@@ -1349,7 +1366,7 @@ textarea:focus {
   border-radius: 8px;
   padding: 0 14px;
   color: var(--accent-dark);
-  background: #fbfdfb;
+  background: #f9f9f7;
   font-weight: 800;
 }
 
@@ -1386,7 +1403,7 @@ textarea:focus {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 14px;
-  background: #fbfdfb;
+  background: #f9f9f7;
 }
 
 .selectedExerciseRow label,
@@ -1396,7 +1413,7 @@ textarea:focus {
 
 .selectedExerciseRow.dragging {
   border-color: var(--accent);
-  box-shadow: 0 0 0 4px rgba(17, 122, 101, 0.12);
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.12);
 }
 
 .selectedExerciseTitle {
@@ -1448,7 +1465,7 @@ textarea:focus {
 }
 
 .signatureHeader span {
-  color: #35443b;
+  color: #333333;
   font-size: 0.95rem;
   font-weight: 700;
 }
@@ -1459,12 +1476,12 @@ textarea:focus {
   border: 1px solid var(--line);
   border-radius: 8px;
   background:
-    linear-gradient(#fbfdfb, #fbfdfb) padding-box,
+    linear-gradient(#f9f9f7, #f9f9f7) padding-box,
     repeating-linear-gradient(
       0deg,
       transparent 0,
       transparent 47px,
-      rgba(17, 122, 101, 0.12) 48px
+      rgba(0, 0, 0, 0.12) 48px
     );
   touch-action: none;
 }
@@ -1483,7 +1500,7 @@ textarea:focus {
 
 .lessonDetailBlock p:last-child {
   margin-bottom: 0;
-  color: #35443b;
+  color: #333333;
   line-height: 1.65;
   white-space: pre-wrap;
 }
@@ -1499,7 +1516,7 @@ textarea:focus {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 14px;
-  background: #fbfdfb;
+  background: #f9f9f7;
 }
 
 .lessonExerciseDetailRow > div:first-child {
@@ -1541,7 +1558,7 @@ textarea:focus {
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fbfdfb;
+  background: #f9f9f7;
 }
 
 .signaturePreview img {
@@ -1563,10 +1580,10 @@ textarea:focus {
   display: grid;
   width: min(340px, calc(100vw - 40px));
   gap: 16px;
-  border: 1px solid #f1b8b0;
+  border: 1px solid #cfcfca;
   border-radius: 8px;
   padding: 16px;
-  background: #fff8f6;
+  background: #f8f8f5;
   box-shadow: var(--shadow);
 }
 

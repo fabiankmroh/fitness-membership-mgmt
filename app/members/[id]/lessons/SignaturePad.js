@@ -26,7 +26,7 @@ export default function SignaturePad({ initialSignatureData = "" }) {
       context.lineCap = "round";
       context.lineJoin = "round";
       context.lineWidth = 3;
-      context.strokeStyle = "#17211b";
+      context.strokeStyle = "#1d1d1b";
 
       if (signatureData) {
         const image = new Image();
