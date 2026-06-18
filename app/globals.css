@@ -130,11 +130,14 @@ button {
 .calendarNavButton {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  min-width: 118px;
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 0 13px;
   background: #ffffff;
   font-size: 0.86rem;
+  white-space: nowrap;
 }
 
 .calendarViewLink {
