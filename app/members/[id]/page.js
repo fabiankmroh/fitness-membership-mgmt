@@ -12,6 +12,7 @@ import {
 import DeleteLessonCreditTransactionForm from "./DeleteLessonCreditTransactionForm";
 import DeleteMemberForm from "../DeleteMemberForm";
 import PhoneInput from "../PhoneInput";
+import ReservationTimeFields from "./ReservationTimeFields";
 import { requireUser } from "@/lib/auth";
 import {
   formatKstDate,
@@ -270,38 +271,10 @@ export default async function MemberDetailPage({ params, searchParams }) {
 
         <form action={createLessonReservationAction} className="reservationForm">
           <input name="memberId" type="hidden" value={member.id} />
-          <label>
-            예약 날짜
-            <div className="reservationDateTimeInputs">
-              <input min={todayKst} name="reservationDate" required type="date" />
-            </div>
-          </label>
-          <label>
-            시작 시간
-            <select name="reservationStartTime" required defaultValue="">
-              <option disabled value="">
-                시작 선택
-              </option>
-              {reservationTimeOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            마무리 시간
-            <select name="reservationEndTime" required defaultValue="">
-                <option disabled value="">
-                  마무리 선택
-                </option>
-                {reservationTimeOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-          </label>
+          <ReservationTimeFields
+            minDate={todayKst}
+            timeOptions={reservationTimeOptions}
+          />
           <label>
             메모
             <input name="memo" placeholder="예: 하체 집중, PT 50분" />
@@ -327,46 +300,13 @@ export default async function MemberDetailPage({ params, searchParams }) {
                     type="hidden"
                     value={reservation.id}
                   />
-                  <label>
-                    예약 날짜
-                    <div className="reservationDateTimeInputs">
-                      <input
-                        defaultValue={formatKstDateInput(reservation.startsAt)}
-                        min={todayKst}
-                        name="reservationDate"
-                        required
-                        type="date"
-                      />
-                    </div>
-                  </label>
-                  <label>
-                    시작 시간
-                    <select
-                      defaultValue={formatKstTimeInput(reservation.startsAt)}
-                      name="reservationStartTime"
-                      required
-                    >
-                      {reservationTimeOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label>
-                    마무리 시간
-                    <select
-                      defaultValue={formatKstTimeInput(reservation.endsAt)}
-                      name="reservationEndTime"
-                      required
-                    >
-                      {reservationTimeOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                  <ReservationTimeFields
+                    defaultDate={formatKstDateInput(reservation.startsAt)}
+                    defaultEndTime={formatKstTimeInput(reservation.endsAt)}
+                    defaultStartTime={formatKstTimeInput(reservation.startsAt)}
+                    minDate={todayKst}
+                    timeOptions={reservationTimeOptions}
+                  />
                   <label>
                     메모
                     <input
