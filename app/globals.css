@@ -234,7 +234,7 @@ button {
 .sectionLabel {
   margin: 0 0 8px;
   color: var(--accent-dark);
-  font-size: 0.82rem;
+  font-size: 1.025rem;
   font-weight: 800;
   letter-spacing: 0;
   text-transform: uppercase;
@@ -249,7 +249,7 @@ p {
 
 h1 {
   margin-bottom: 10px;
-  font-size: clamp(1.65rem, 3.75vw, 3.6rem);
+  font-size: clamp(1.5rem, 3.35vw, 3.2rem);
   line-height: 0.96;
 }
 
@@ -1110,6 +1110,7 @@ textarea:focus {
   display: inline-flex;
   margin-bottom: 22px;
   color: var(--accent-dark);
+  font-size: 1.05rem;
   font-weight: 800;
   text-decoration: none;
 }
@@ -1768,6 +1769,6 @@ textarea:focus {
   }
 
   h1 {
-    font-size: 1.84rem;
+    font-size: 1.65rem;
   }
 }
